@@ -1,0 +1,339 @@
+<!DOCTYPE HTML>
+<html lang="en">
+	<head>
+		<title>GLSL Sandbox</title>
+		<meta charset="utf-8">
+		<style>
+
+			body {
+
+				background-color: #000000;
+				margin: 0px;
+				overflow: hidden;
+
+			}
+
+			#code {
+
+				position: absolute;
+				top: 80px;
+				left: 30px;
+				width: 92%;
+				height: 90%;
+
+				color: #ffffff;
+				background-color: transparent;
+				border: none;
+				font-family: Monospace;
+				font-size: 14px;
+				font-weight: bold;
+				text-shadow: rgba( 0, 0, 0, 1 ) 0px 1px 2px;
+
+				white-space: pre;
+
+			}
+
+			#tools {
+
+				position: absolute;
+				top: 25px;
+				left: 25px;
+
+			}
+
+			button {
+
+				padding: 8px 12px 8px 12px;
+
+				border: none;
+				border-radius: 5px;
+				margin-right: 5px;
+
+				color: #ffffff;
+				background-color: #000000;
+				opacity: 0.5;
+
+				font-family: Monospace;
+				font-size: 12px;
+				font-weight: bold;
+
+				cursor: pointer;
+
+			}
+
+			button:hover {
+
+				opacity: 1;
+
+			}
+
+			textarea:focus {
+
+				outline: 0; /* this removes browser-side outline */
+
+			}
+
+		</style>
+	</head>
+	<body>
+
+		<script>
+
+			if ( !window.requestAnimationFrame ) {
+
+				window.requestAnimationFrame = ( function() {
+
+					return window.webkitRequestAnimationFrame ||
+					window.mozRequestAnimationFrame ||
+					window.oRequestAnimationFrame ||
+					window.msRequestAnimationFrame ||
+					function ( callback, element ) {
+
+						window.setTimeout( callback, 1000 / 60 );
+
+					};
+
+				} )();
+
+			}
+
+			// Greetings to Iq/RGBA! ;)
+
+			var canvas, gl, buffer, currentProgram, compileButton,
+			vertex_position, parameters = { start_time: Date.now(), time: 0, screenWidth: 0, screenHeight: 0 };
+
+			init();
+			animate();
+
+			function init() {
+
+				var effect = document.createElement( 'div' );
+				document.body.appendChild( effect );
+
+				canvas = document.createElement( 'canvas' );
+				effect.appendChild( canvas );
+
+				//
+
+				var code = document.createElement( 'textarea' );
+				code.id = 'code';
+				code.style.visibility = 'visible';
+				code.addEventListener( 'keydown', function ( event ) {
+
+					if ( event.keyCode == 9 ) {
+
+						// Fake TAB
+
+						event.preventDefault();
+
+						var start = code.selectionStart;
+						var end = code.selectionEnd;
+
+						code.value = code.value.substring( 0, start ) + '\t' + code.value.substring( end, code.value.length );
+
+						code.selectionStart = code.selectionEnd = start + 1;
+						code.focus();
+
+					}
+
+				}, false );
+				code.addEventListener( 'keyup', function ( event ) {
+
+					if ( event.keyCode == 37 ) return;
+					if ( event.keyCode == 38 ) return;
+					if ( event.keyCode == 39 ) return;
+					if ( event.keyCode == 40 ) return;
+
+					compile();
+
+				}, false );
+				document.body.appendChild( code );
+
+				if ( window.location.hash ) {
+
+					code.value = decodeURIComponent( window.location.hash.substr( 1 ) );
+
+				} else {
+
+					code.value = decodeURIComponent( '%23ifdef%20GL_ES%0Aprecision%20highp%20float%3B%0A%23endif%0A%0Auniform%20float%20time%3B%0Auniform%20vec2%20resolution%3B%0A%0Avoid%20main(%20void%20)%20%7B%0A%0A%09vec2%20position%20%3D%20gl_FragCoord.xy%20%2F%20resolution.xy%3B%0A%0A%09float%20color%20%3D%200.0%3B%0A%09color%20%2B%3D%20sin(%20position.x%20*%20cos(%20time%20%2F%2015.0%20)%20*%2080.0%20)%20%2B%20cos(%20position.y%20*%20cos(%20time%20%2F%2015.0%20)%20*%2010.0%20)%3B%0A%09color%20%2B%3D%20sin(%20position.y%20*%20sin(%20time%20%2F%2010.0%20)%20*%2040.0%20)%20%2B%20cos(%20position.x%20*%20sin(%20time%20%2F%2025.0%20)%20*%2040.0%20)%3B%0A%09color%20%2B%3D%20sin(%20position.x%20*%20sin(%20time%20%2F%205.0%20)%20*%2010.0%20)%20%2B%20sin(%20position.y%20*%20sin(%20time%20%2F%2035.0%20)%20*%2080.0%20)%3B%0A%09color%20*%3D%20sin(%20time%20%2F%2010.0%20)%20*%200.5%3B%0A%0A%09gl_FragColor%20%3D%20vec4(%20vec3(%20color%2C%20color%20*%200.5%2C%20sin(%20color%20%2B%20time%20%2F%203.0%20)%20*%200.75%20)%2C%201.0%20)%3B%0A%0A%7D' );
+				}
+
+				//
+
+				var tools = document.createElement( 'div' );
+				tools.id = 'tools';
+				document.body.appendChild( tools );
+
+				var button = document.createElement( 'button' );
+				button.textContent = 'hide code';
+				button.addEventListener( 'click', function ( event ) {
+
+					if ( code.style.visibility == 'visible' ) {
+
+						button.textContent = 'show code';
+						code.style.visibility = 'hidden';
+						compileButton.style.visibility = 'hidden';
+
+					} else {
+
+						button.textContent = 'hide code';
+						code.style.visibility = 'visible';
+						compileButton.style.visibility = 'visible';
+
+					}
+
+				}, false );
+				tools.appendChild( button );
+
+
+				compileButton = document.createElement( 'button' );
+				compileButton.textContent = 'compile';
+				compileButton.addEventListener( 'click', function ( event ) {
+
+					compile();
+
+				}, false );
+				tools.appendChild( compileButton );
+
+				// Initialise WebGL
+
+				try {
+
+					gl = canvas.getContext( 'experimental-webgl' );
+
+				} catch( error ) { }
+
+				if ( !gl ) {
+
+					alert("WebGL not supported");
+					throw "cannot create webgl context";
+
+				}
+
+				// Create Vertex buffer (2 triangles)
+
+				buffer = gl.createBuffer();
+				gl.bindBuffer( gl.ARRAY_BUFFER, buffer );
+				gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( [ - 1.0, - 1.0, 1.0, - 1.0, - 1.0, 1.0, 1.0, - 1.0, 1.0, 1.0, - 1.0, 1.0 ] ), gl.STATIC_DRAW );
+
+				compile();
+
+				onWindowResize();
+				window.addEventListener( 'resize', onWindowResize, false );
+
+			}
+
+			function compile() {
+
+				var program = gl.createProgram();
+				var fragment = document.getElementById( 'code' ).value;
+
+				var vs = createShader( 'attribute vec3 position; void main() { gl_Position = vec4( position, 1.0 ); }', gl.VERTEX_SHADER );
+				var fs = createShader( fragment, gl.FRAGMENT_SHADER );
+
+				if ( vs == null || fs == null ) return null;
+
+				gl.attachShader( program, vs );
+				gl.attachShader( program, fs );
+
+				gl.deleteShader( vs );
+				gl.deleteShader( fs );
+
+				gl.linkProgram( program );
+
+				if ( !gl.getProgramParameter( program, gl.LINK_STATUS ) ) {
+
+					console.error( 'VALIDATE_STATUS: ' + gl.getProgramParameter( program, gl.VALIDATE_STATUS ), 'ERROR: ' + gl.getError() );
+					compileButton.style.color = '#ff0000';
+					compileButton.textContent = 'compiled with errors';
+
+					return;
+
+				}
+
+				if ( currentProgram ) {
+
+					gl.deleteProgram( currentProgram );
+					window.location.hash = encodeURIComponent( fragment );
+
+				}
+
+				currentProgram = program;
+
+				compileButton.style.color = '#00ff00';
+				compileButton.textContent = 'compiled succesfully';
+
+			}
+
+			function createShader( src, type ) {
+
+				var shader = gl.createShader( type );
+
+				gl.shaderSource( shader, src );
+				gl.compileShader( shader );
+
+				if ( !gl.getShaderParameter( shader, gl.COMPILE_STATUS ) ) {
+
+					console.error( gl.getShaderInfoLog( shader ) );
+
+					compileButton.style.color = '#ff0000';
+					compileButton.textContent = 'compiled with errors';
+
+					return null;
+
+				}
+
+				return shader;
+
+			}
+
+			function onWindowResize( event ) {
+
+				canvas.width = window.innerWidth;
+				canvas.height = window.innerHeight;
+
+				parameters.screenWidth = canvas.width;
+				parameters.screenHeight = canvas.height;
+
+				gl.viewport( 0, 0, canvas.width, canvas.height );
+
+			}
+
+			function animate() {
+
+				requestAnimationFrame( animate );
+				render();
+
+			}
+
+			function render() {
+
+				if ( !currentProgram ) return;
+
+				parameters.time = Date.now() - parameters.start_time;
+
+				gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
+
+				// Load program into GPU
+
+				gl.useProgram( currentProgram );
+
+				// Set values to program variables
+
+				gl.uniform1f( gl.getUniformLocation( currentProgram, 'time' ), parameters.time / 1000 );
+				gl.uniform2f( gl.getUniformLocation( currentProgram, 'resolution' ), parameters.screenWidth, parameters.screenHeight );
+
+				// Render geometry
+
+				gl.bindBuffer( gl.ARRAY_BUFFER, buffer );
+				gl.vertexAttribPointer( vertex_position, 2, gl.FLOAT, false, 0, 0 );
+				gl.enableVertexAttribArray( vertex_position );
+				gl.drawArrays( gl.TRIANGLES, 0, 6 );
+				gl.disableVertexAttribArray( vertex_position );
+
+			}
+
+		</script>
+
+	</body>
+</html>
