@@ -254,7 +254,7 @@
 				if ( currentProgram ) {
 
 					gl.deleteProgram( currentProgram );
-					window.location.hash = encodeURIComponent( fragment );
+					window.location.replace( '#' + encodeURIComponent( fragment ) );
 
 				}
 
