@@ -1,4 +1,4 @@
-<!DOCTYPE HTML>
+<!DOCTYPE html>
 <html lang="en">
 	<head>
 		<title>GLSL Sandbox</title>
@@ -164,11 +164,28 @@
 
 				if ( window.location.hash ) {
 
-					readURL( window.location.hash.substr( 1 ) );
+					var hash = window.location.hash.substr( 1 );
+					var parts = hash.split( '/' );
+
+					if ( parts.length == 1 ) { // basic format
+
+						code.value = decodeURIComponent( hash );
+
+					} else if ( parts.length == 2 ) {
+
+						switch ( parts[ 0 ] ) {
+
+							case 'A': // LZMA
+								readURL( parts[ 1 ] );
+								break;
+
+						}
+
+					}
 
 				} else {
 
-					code.value = decodeURIComponent( '%23ifdef%20GL_ES%0Aprecision%20highp%20float%3B%0A%23endif%0A%0Auniform%20float%20time%3B%0Auniform%20vec2%20resolution%3B%0A%0Avoid%20main(%20void%20)%20%7B%0A%0A%09vec2%20position%20%3D%20gl_FragCoord.xy%20%2F%20resolution.xy%3B%0A%0A%09float%20color%20%3D%200.0%3B%0A%09color%20%2B%3D%20sin(%20position.x%20*%20cos(%20time%20%2F%2015.0%20)%20*%2080.0%20)%20%2B%20cos(%20position.y%20*%20cos(%20time%20%2F%2015.0%20)%20*%2010.0%20)%3B%0A%09color%20%2B%3D%20sin(%20position.y%20*%20sin(%20time%20%2F%2010.0%20)%20*%2040.0%20)%20%2B%20cos(%20position.x%20*%20sin(%20time%20%2F%2025.0%20)%20*%2040.0%20)%3B%0A%09color%20%2B%3D%20sin(%20position.x%20*%20sin(%20time%20%2F%205.0%20)%20*%2010.0%20)%20%2B%20sin(%20position.y%20*%20sin(%20time%20%2F%2035.0%20)%20*%2080.0%20)%3B%0A%09color%20*%3D%20sin(%20time%20%2F%2010.0%20)%20*%200.5%3B%0A%0A%09gl_FragColor%20%3D%20vec4(%20vec3(%20color%2C%20color%20*%200.5%2C%20sin(%20color%20%2B%20time%20%2F%203.0%20)%20*%200.75%20)%2C%201.0%20)%3B%0A%0A%7D' );
+					readURL( '5d00000100720200000000000000119a48c65ab5aec1f910f780dfdfe473e599a211a90304ab6a650a0bdc710e60d9ef6827f7e37c460aba047c4de9e20bce74f0e6773fe3b4b7d379f6f885aacf346330fef1ffee566139968f57db637a7fabad10c58d9ee59035429f68fd37377ae69569d2c30059acf29a58281c4208405f4e5bc30a50a7c8e7027cfa1ecffac22c377e315721df5df09d053c0ad83443808080b48ad5436340a8c09dfb1728fae483ebf19ff6659d982ab333081cac1172e50f2387c182cfa580d8d4c9750425895835f943e9c0c4071d2ecd0e61e6e65e9b573771dca05873425aad4ad69ea079b9b8481dc3862d5ea10e087f563db734e3298b538a774aac2a000f3595fab1943fc328169b6eff7ce9fa00' );
 
 				}
 
@@ -182,7 +199,7 @@
 				button.textContent = 'hide code';
 				button.addEventListener( 'click', function ( event ) {
 
-					if ( code.style.visibility == 'visible' ) {
+					if ( code.style.visibility === 'visible' ) {
 
 						button.textContent = 'show code';
 						code.style.visibility = 'hidden';
@@ -287,7 +304,7 @@
 				compressor.compress( shaderString, 1, function( bytes ) {
 
 					var hex = convertBytesToHex( bytes );
-					window.location.replace( '#' + hex );
+					window.location.replace( '#A/' + hex );
 
 				},
 				dummyFunction );
