@@ -1,6 +1,7 @@
-CodeMirror.defineMode("clike", function(config, parserConfig) {
+CodeMirror.defineMode("glsl", function(config, parserConfig) {
   var indentUnit = config.indentUnit,
       keywords = parserConfig.keywords || {},
+      builtins = parserConfig.builtins || {},
       blockKeywords = parserConfig.blockKeywords || {},
       atoms = parserConfig.atoms || {},
       hooks = parserConfig.hooks || {},
@@ -21,7 +22,7 @@ CodeMirror.defineMode("clike", function(config, parserConfig) {
     }
     if (/[\[\]{}\(\),;\:\.]/.test(ch)) {
       curPunc = ch;
-      return null
+      return "bracket";
     }
     if (/\d/.test(ch)) {
       stream.eatWhile(/[\w\.]/);
@@ -46,6 +47,9 @@ CodeMirror.defineMode("clike", function(config, parserConfig) {
     if (keywords.propertyIsEnumerable(cur)) {
       if (blockKeywords.propertyIsEnumerable(cur)) curPunc = "newstatement";
       return "keyword";
+    }
+    if (builtins.propertyIsEnumerable(cur)) {
+      return "builtin";
     }
     if (atoms.propertyIsEnumerable(cur)) return "atom";
     return "word";
@@ -152,9 +156,17 @@ CodeMirror.defineMode("clike", function(config, parserConfig) {
     for (var i = 0; i < words.length; ++i) obj[words[i]] = true;
     return obj;
   }
-  var cKeywords = "auto if break int case long char register continue return default short do sizeof " +
-    "double static else struct entry switch extern typedef float union for unsigned " +
-    "goto while enum void const signed volatile";
+  var glslKeywords = "if break int case continue return default do " +
+    "else struct switch float for unsigned goto while void const signed " +
+    "vec2 vec3 vec4 mat2 mat3 mat4 precision lowp midp highp uniform " +
+    "attribute varying gl_Vertex gl_FragCoord gl_FragColor sampler2D " +
+    "samplerCube";
+  var glslBuiltins = "radians degrees sin cos tan asin acos atan " +
+    "pow exp log exp2 log2 sqrt inversesqrt abs sign foor trunc " +
+    "round ceil fract mod min max clamp mix step smoothstep length " +
+    "distance dot cross normalize reflect refract transpose lessThan " +
+    "greaterThan equal notEqual any all not dFdx dFdy fwidth texture2D " +
+    "textureCube";
 
   function cppHook(stream, state) {
     if (!state.startOfLine) return false;
@@ -174,74 +186,12 @@ CodeMirror.defineMode("clike", function(config, parserConfig) {
     return "string";
   }
 
-  CodeMirror.defineMIME("text/x-csrc", {
-    name: "clike",
-    keywords: words(cKeywords),
+  CodeMirror.defineMIME("text/x-glsl", {
+    name: "glsl",
+    keywords: words(glslKeywords),
+    builtins: words(glslBuiltins),
     blockKeywords: words("case do else for if switch while struct"),
     atoms: words("null"),
     hooks: {"#": cppHook}
-  });
-  CodeMirror.defineMIME("text/x-c++src", {
-    name: "clike",
-    keywords: words(cKeywords + " asm dynamic_cast namespace reinterpret_cast try bool explicit new " +
-                    "static_cast typeid catch operator template typename class friend private " +
-                    "this using const_cast inline public throw virtual delete mutable protected " +
-                    "wchar_t"),
-    blockKeywords: words("catch class do else finally for if struct switch try while"),
-    atoms: words("true false null"),
-    hooks: {"#": cppHook}
-  });
-  CodeMirror.defineMIME("text/x-java", {
-    name: "clike",
-    keywords: words("abstract assert boolean break byte case catch char class const continue default " + 
-                    "do double else enum extends final finally float for goto if implements import " +
-                    "instanceof int interface long native new package private protected public " +
-                    "return short static strictfp super switch synchronized this throw throws transient " +
-                    "try void volatile while"),
-    blockKeywords: words("catch class do else finally for if switch try while"),
-    atoms: words("true false null"),
-    hooks: {
-      "@": function(stream, state) {
-        stream.eatWhile(/[\w\$_]/);
-        return "meta";
-      }
-    }
-  });
-  CodeMirror.defineMIME("text/x-csharp", {
-    name: "clike",
-    keywords: words("abstract as base bool break byte case catch char checked class const continue decimal" + 
-                    " default delegate do double else enum event explicit extern finally fixed float for" + 
-                    " foreach goto if implicit in int interface internal is lock long namespace new object" + 
-                    " operator out override params private protected public readonly ref return sbyte sealed short" + 
-                    " sizeof stackalloc static string struct switch this throw try typeof uint ulong unchecked" + 
-                    " unsafe ushort using virtual void volatile while add alias ascending descending dynamic from get" + 
-                    " global group into join let orderby partial remove select set value var yield"),
-    blockKeywords: words("catch class do else finally for foreach if struct switch try while"),
-    atoms: words("true false null"),
-    hooks: {
-      "@": function(stream, state) {
-        if (stream.eat('"')) {
-          state.tokenize = tokenAtString;
-          return tokenAtString(stream, state);
-        }
-        stream.eatWhile(/[\w\$_]/);
-        return "meta";
-      }
-    }
-  });
-  CodeMirror.defineMIME("text/x-groovy", {
-    name: "clike",
-    keywords: words("abstract as assert boolean break byte case catch char class const continue def default " +
-                    "do double else enum extends final finally float for goto if implements import " +
-                    "in instanceof int interface long native new package property private protected public " +
-                    "return short static strictfp super switch synchronized this throw throws transient " +
-                    "try void volatile while"),
-    atoms: words("true false null"),
-    hooks: {
-      "@": function(stream, state) {
-        stream.eatWhile(/[\w\$_]/);
-        return "meta";
-      }
-    }
   });
 }());

@@ -57,7 +57,7 @@
 		<script src='js/jquery.js'></script>
 		<script src='js/helpers.js'></script>
 		<script src="js/codemirror.js"></script>
-		<script src="js/clike.js"></script>
+		<script src="js/glsl.js"></script>
 
 		<script id="example" type="x-shader/x-fragment">#ifdef GL_ES
 precision highp float;
@@ -278,6 +278,7 @@ void main( void ) {
 				code = CodeMirror(document.body, {
 					lineNumbers: true,
 					matchBrackets: true,
+					mode: "text/x-glsl",
 					onChange: function() {
 						compile();
 					}
