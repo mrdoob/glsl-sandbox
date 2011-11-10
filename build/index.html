@@ -13,32 +13,6 @@
 
 			}
 
-			#code {
-
-				position: absolute;
-
-				padding: 12px;
-
-				border: none;
-				border-radius: 5px;
-
-				color: #ffffff;
-				background-color: transparent;
-				font-family: Monospace;
-				font-size: 14px;
-				font-weight: bold;
-				text-shadow: rgba( 0, 0, 0, 1 ) 0px 1px 2px;
-
-				white-space: pre;
-
-			}
-
-			#code:hover {
-
-				background-color:rgba(0,0,0,.5);
-
-			}
-
 			#tools {
 
 				position: absolute;
@@ -73,13 +47,11 @@
 
 			}
 
-			textarea:focus {
-
-				outline: 0; /* this removes browser-side outline */
-
-			}
-
 		</style>
+		<link rel="stylesheet" href="lib/codemirror.css">
+		<script src="lib/codemirror.js"></script>
+		<script src="lib/glsl.js"></script>
+		<link rel="stylesheet" href="lib/default.css">
 	</head>
 	<body>
 
@@ -121,51 +93,6 @@
 
 				//
 
-				code = document.createElement( 'textarea' );
-				code.id = 'code';
-				code.style.visibility = 'visible';
-				code.addEventListener( 'keydown', function ( event ) {
-
-					if ( event.keyCode == 9 ) {
-
-						// Fake TAB
-
-						event.preventDefault();
-
-						var start = code.selectionStart;
-						var end = code.selectionEnd;
-
-						code.value = code.value.substring( 0, start ) + '\t' + code.value.substring( end, code.value.length );
-
-						code.selectionStart = code.selectionEnd = start + 1;
-						code.focus();
-
-					}
-
-				}, false );
-				code.addEventListener( 'keyup', function ( event ) {
-
-					if ( event.keyCode == 37 ) return;
-					if ( event.keyCode == 38 ) return;
-					if ( event.keyCode == 39 ) return;
-					if ( event.keyCode == 40 ) return;
-
-					compile();
-
-				}, false );
-				document.body.appendChild( code );
-
-				if ( window.location.hash ) {
-
-					code.value = decodeURIComponent( window.location.hash.substr( 1 ) );
-
-				} else {
-
-					code.value = decodeURIComponent( '%23ifdef%20GL_ES%0Aprecision%20highp%20float%3B%0A%23endif%0A%0Auniform%20float%20time%3B%0Auniform%20vec2%20resolution%3B%0A%0Avoid%20main(%20void%20)%20%7B%0A%0A%09vec2%20position%20%3D%20gl_FragCoord.xy%20%2F%20resolution.xy%3B%0A%0A%09float%20color%20%3D%200.0%3B%0A%09color%20%2B%3D%20sin(%20position.x%20*%20cos(%20time%20%2F%2015.0%20)%20*%2080.0%20)%20%2B%20cos(%20position.y%20*%20cos(%20time%20%2F%2015.0%20)%20*%2010.0%20)%3B%0A%09color%20%2B%3D%20sin(%20position.y%20*%20sin(%20time%20%2F%2010.0%20)%20*%2040.0%20)%20%2B%20cos(%20position.x%20*%20sin(%20time%20%2F%2025.0%20)%20*%2040.0%20)%3B%0A%09color%20%2B%3D%20sin(%20position.x%20*%20sin(%20time%20%2F%205.0%20)%20*%2010.0%20)%20%2B%20sin(%20position.y%20*%20sin(%20time%20%2F%2035.0%20)%20*%2080.0%20)%3B%0A%09color%20*%3D%20sin(%20time%20%2F%2010.0%20)%20*%200.5%3B%0A%0A%09gl_FragColor%20%3D%20vec4(%20vec3(%20color%2C%20color%20*%200.5%2C%20sin(%20color%20%2B%20time%20%2F%203.0%20)%20*%200.75%20)%2C%201.0%20)%3B%0A%0A%7D' );
-				}
-
-				//
-
 				var tools = document.createElement( 'div' );
 				tools.id = 'tools';
 				document.body.appendChild( tools );
@@ -174,16 +101,16 @@
 				button.textContent = 'hide code';
 				button.addEventListener( 'click', function ( event ) {
 
-					if ( code.style.visibility == 'visible' ) {
+					if ( code.getWrapperElement().style.visibility == 'visible' ) {
 
 						button.textContent = 'show code';
-						code.style.visibility = 'hidden';
+						code.getWrapperElement().style.visibility = 'hidden';
 						compileButton.style.visibility = 'hidden';
 
 					} else {
 
 						button.textContent = 'hide code';
-						code.style.visibility = 'visible';
+						code.getWrapperElement().style.visibility = 'visible';
 						compileButton.style.visibility = 'visible';
 
 					}
@@ -222,7 +149,24 @@
 				gl.bindBuffer( gl.ARRAY_BUFFER, buffer );
 				gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( [ - 1.0, - 1.0, 1.0, - 1.0, - 1.0, 1.0, 1.0, - 1.0, 1.0, 1.0, - 1.0, 1.0 ] ), gl.STATIC_DRAW );
 
-				compile();
+				code = CodeMirror(document.body, {
+					lineNumbers: true,
+					matchBrackets: true,
+					mode: "text/x-glsl",
+					onChange: function() {
+						compile();
+					}
+				});
+				code.getWrapperElement().style.visibility = 'visible';
+
+				if ( window.location.hash ) {
+
+					code.setValue( decodeURIComponent( window.location.hash.substr( 1 ) ) );
+
+				} else {
+
+					code.setValue( decodeURIComponent( '%23ifdef%20GL_ES%0Aprecision%20highp%20float%3B%0A%23endif%0A%0Auniform%20float%20time%3B%0Auniform%20vec2%20resolution%3B%0A%0Avoid%20main(%20void%20)%20%7B%0A%0A%09vec2%20position%20%3D%20gl_FragCoord.xy%20%2F%20resolution.xy%3B%0A%0A%09float%20color%20%3D%200.0%3B%0A%09color%20%2B%3D%20sin(%20position.x%20*%20cos(%20time%20%2F%2015.0%20)%20*%2080.0%20)%20%2B%20cos(%20position.y%20*%20cos(%20time%20%2F%2015.0%20)%20*%2010.0%20)%3B%0A%09color%20%2B%3D%20sin(%20position.y%20*%20sin(%20time%20%2F%2010.0%20)%20*%2040.0%20)%20%2B%20cos(%20position.x%20*%20sin(%20time%20%2F%2025.0%20)%20*%2040.0%20)%3B%0A%09color%20%2B%3D%20sin(%20position.x%20*%20sin(%20time%20%2F%205.0%20)%20*%2010.0%20)%20%2B%20sin(%20position.y%20*%20sin(%20time%20%2F%2035.0%20)%20*%2080.0%20)%3B%0A%09color%20*%3D%20sin(%20time%20%2F%2010.0%20)%20*%200.5%3B%0A%0A%09gl_FragColor%20%3D%20vec4(%20vec3(%20color%2C%20color%20*%200.5%2C%20sin(%20color%20%2B%20time%20%2F%203.0%20)%20*%200.75%20)%2C%201.0%20)%3B%0A%0A%7D' ) );
+				}
 
 				onWindowResize();
 				window.addEventListener( 'resize', onWindowResize, false );
@@ -232,7 +176,7 @@
 			function compile() {
 
 				var program = gl.createProgram();
-				var fragment = document.getElementById( 'code' ).value;
+				var fragment = code.getValue();
 
 				var vs = createShader( 'attribute vec3 position; void main() { gl_Position = vec4( position, 1.0 ); }', gl.VERTEX_SHADER );
 				var fs = createShader( fragment, gl.FRAGMENT_SHADER );
@@ -300,10 +244,10 @@
 
 			function onWindowResize( event ) {
 
-				code.style.top = '75px';
-				code.style.left = '25px';
-				code.style.width = ( window.innerWidth - 75 ) + 'px';
-				code.style.height = ( window.innerHeight - 125 ) + 'px';
+				code.getWrapperElement().style.top = '75px';
+				code.getWrapperElement().style.left = '25px';
+				code.getWrapperElement().style.width = ( window.innerWidth - 75 ) + 'px';
+				code.getWrapperElement().style.height = ( window.innerHeight - 125 ) + 'px';
 
 				canvas.width = window.innerWidth;
 				canvas.height = window.innerHeight;
