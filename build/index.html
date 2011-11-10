@@ -165,21 +165,19 @@
 				if ( window.location.hash ) {
 
 					var hash = window.location.hash.substr( 1 );
-					var parts = hash.split( '/' );
+					var version = hash.substr( 0, 2 );
 
-					if ( parts.length == 1 ) { // basic format
+					if ( version == 'A/' ) {
+
+						// LZMA
+
+						readURL( hash.substr( 2 ) );
+
+					} else {
+
+						// Basic format
 
 						code.value = decodeURIComponent( hash );
-
-					} else if ( parts.length == 2 ) {
-
-						switch ( parts[ 0 ] ) {
-
-							case 'A': // LZMA
-								readURL( parts[ 1 ] );
-								break;
-
-						}
 
 					}
 
