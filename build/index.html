@@ -16,20 +16,26 @@
 			#code {
 
 				position: absolute;
-				top: 80px;
-				left: 30px;
-				width: 92%;
-				height: 90%;
+
+				padding: 12px;
+
+				border: none;
+				border-radius: 5px;
 
 				color: #ffffff;
 				background-color: transparent;
-				border: none;
 				font-family: Monospace;
 				font-size: 14px;
 				font-weight: bold;
 				text-shadow: rgba( 0, 0, 0, 1 ) 0px 1px 2px;
 
 				white-space: pre;
+
+			}
+
+			#code:hover {
+
+				background-color:rgba(0,0,0,.5);
 
 			}
 
@@ -99,7 +105,7 @@
 
 			// Greetings to Iq/RGBA! ;)
 
-			var canvas, gl, buffer, currentProgram, compileButton,
+			var code, canvas, gl, buffer, currentProgram, compileButton,
 			vertex_position, parameters = { start_time: Date.now(), time: 0, screenWidth: 0, screenHeight: 0 };
 
 			init();
@@ -115,7 +121,7 @@
 
 				//
 
-				var code = document.createElement( 'textarea' );
+				code = document.createElement( 'textarea' );
 				code.id = 'code';
 				code.style.visibility = 'visible';
 				code.addEventListener( 'keydown', function ( event ) {
@@ -288,6 +294,11 @@
 			}
 
 			function onWindowResize( event ) {
+
+				code.style.top = '75px';
+				code.style.left = '25px';
+				code.style.width = ( window.innerWidth - 75 ) + 'px';
+				code.style.height = ( window.innerHeight - 125 ) + 'px';
 
 				canvas.width = window.innerWidth;
 				canvas.height = window.innerHeight;
