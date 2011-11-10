@@ -33,6 +33,13 @@
 
 			}
 
+			#code:hover {
+
+				background-color: rgba(0,0,0,.5);
+			}
+
+
+
 			#tools {
 
 				position: absolute;
@@ -271,10 +278,11 @@
 
 				gl.shaderSource( shader, src );
 				gl.compileShader( shader );
+				compileButton.title = '';
 
 				if ( !gl.getShaderParameter( shader, gl.COMPILE_STATUS ) ) {
 
-					console.error( gl.getShaderInfoLog( shader ) );
+					console.error( compileButton.title = gl.getShaderInfoLog( shader ) );
 
 					compileButton.style.color = '#ff0000';
 					compileButton.textContent = 'compiled with errors';
