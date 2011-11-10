@@ -278,9 +278,14 @@
 				gl.shaderSource( shader, src );
 				gl.compileShader( shader );
 
+				compileButton.title = '';
+
 				if ( !gl.getShaderParameter( shader, gl.COMPILE_STATUS ) ) {
 
-					console.error( gl.getShaderInfoLog( shader ) );
+					var error = gl.getShaderInfoLog( shader );
+
+					compileButton.title = error;
+					console.error( error );
 
 					compileButton.style.color = '#ff0000';
 					compileButton.textContent = 'compiled with errors';
