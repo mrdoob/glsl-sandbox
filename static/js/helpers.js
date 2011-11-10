@@ -52,7 +52,7 @@ function readURL( hash ) {
 
 	compressor.decompress( bytes, function( text ) {
 
-		code.value = text;
+		code.setValue(text);
 		compile();
 
 	},

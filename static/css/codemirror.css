@@ -1,11 +1,24 @@
 .CodeMirror {
+  color: white;
+  text-shadow: rgba( 0, 0, 0, 1 ) 0px 1px 2px;
+  background-color: transparent;
+  position: absolute; left: 25px; top: 75px;
+  padding: 12px;
+  border: none;
+  border-radius: 5px;
   line-height: 1em;
   font-family: monospace;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.CodeMirror:hover {
+  background-color:rgba(0,0,0,.5);
 }
 
 .CodeMirror-scroll {
   overflow: auto;
-  height: 300px;
+  height: 100%;
   /* This is needed to prevent an IE[67] bug where the scrolled content
      is visible outside of the scrolling box. */
   position: relative;
@@ -14,8 +27,8 @@
 .CodeMirror-gutter {
   position: absolute; left: 0; top: 0;
   z-index: 10;
-  background-color: #f7f7f7;
-  border-right: 1px solid #eee;
+/*  background-color: #f7f7f7; */
+  border-right: 1px solid black;
   min-width: 2em;
   height: 100%;
 }
@@ -59,7 +72,7 @@
   z-index: 10;
   position: absolute;
   visibility: hidden;
-  border-left: 1px solid black !important;
+  border-left: 1px solid white !important;
 }
 .CodeMirror-focused .CodeMirror-cursor {
   visibility: visible;
