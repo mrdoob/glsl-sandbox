@@ -50,7 +50,7 @@
 		</style>
 		<link rel="stylesheet" href="lib/codemirror.css">
 		<script src="lib/codemirror.js"></script>
-		<script src="lib/clike.js"></script>
+		<script src="lib/glsl.js"></script>
 		<link rel="stylesheet" href="lib/default.css">
 	</head>
 	<body>
@@ -152,7 +152,7 @@
 				code = CodeMirror(document.body, {
 					lineNumbers: true,
 					matchBrackets: true,
-					mode: "text/x-csrc",
+					mode: "text/x-glsl",
 					onChange: function() {
 						compile();
 					}
