@@ -83,7 +83,11 @@
 	</head>
 	<body>
 
+		<script src="js/lzma.js"></script>
+
 		<script>
+
+			var compressor = new LZMA( "js/lzma_worker.js" );
 
 			if ( !window.requestAnimationFrame ) {
 
@@ -124,6 +128,7 @@
 				code = document.createElement( 'textarea' );
 				code.id = 'code';
 				code.style.visibility = 'visible';
+
 				code.addEventListener( 'keydown', function ( event ) {
 
 					if ( event.keyCode == 9 ) {
@@ -143,6 +148,7 @@
 					}
 
 				}, false );
+
 				code.addEventListener( 'keyup', function ( event ) {
 
 					if ( event.keyCode == 37 ) return;
@@ -153,15 +159,17 @@
 					compile();
 
 				}, false );
+
 				document.body.appendChild( code );
 
 				if ( window.location.hash ) {
 
-					code.value = decodeURIComponent( window.location.hash.substr( 1 ) );
+					readURL( window.location.hash.substr( 1 ) );
 
 				} else {
 
 					code.value = decodeURIComponent( '%23ifdef%20GL_ES%0Aprecision%20highp%20float%3B%0A%23endif%0A%0Auniform%20float%20time%3B%0Auniform%20vec2%20resolution%3B%0A%0Avoid%20main(%20void%20)%20%7B%0A%0A%09vec2%20position%20%3D%20gl_FragCoord.xy%20%2F%20resolution.xy%3B%0A%0A%09float%20color%20%3D%200.0%3B%0A%09color%20%2B%3D%20sin(%20position.x%20*%20cos(%20time%20%2F%2015.0%20)%20*%2080.0%20)%20%2B%20cos(%20position.y%20*%20cos(%20time%20%2F%2015.0%20)%20*%2010.0%20)%3B%0A%09color%20%2B%3D%20sin(%20position.y%20*%20sin(%20time%20%2F%2010.0%20)%20*%2040.0%20)%20%2B%20cos(%20position.x%20*%20sin(%20time%20%2F%2025.0%20)%20*%2040.0%20)%3B%0A%09color%20%2B%3D%20sin(%20position.x%20*%20sin(%20time%20%2F%205.0%20)%20*%2010.0%20)%20%2B%20sin(%20position.y%20*%20sin(%20time%20%2F%2035.0%20)%20*%2080.0%20)%3B%0A%09color%20*%3D%20sin(%20time%20%2F%2010.0%20)%20*%200.5%3B%0A%0A%09gl_FragColor%20%3D%20vec4(%20vec3(%20color%2C%20color%20*%200.5%2C%20sin(%20color%20%2B%20time%20%2F%203.0%20)%20*%200.75%20)%2C%201.0%20)%3B%0A%0A%7D' );
+
 				}
 
 				//
@@ -222,7 +230,7 @@
 				gl.bindBuffer( gl.ARRAY_BUFFER, buffer );
 				gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( [ - 1.0, - 1.0, 1.0, - 1.0, - 1.0, 1.0, 1.0, - 1.0, 1.0, 1.0, - 1.0, 1.0 ] ), gl.STATIC_DRAW );
 
-				compile();
+				if ( code.value ) compile();
 
 				onWindowResize();
 				window.addEventListener( 'resize', onWindowResize, false );
@@ -260,7 +268,8 @@
 				if ( currentProgram ) {
 
 					gl.deleteProgram( currentProgram );
-					window.location.replace( '#' + encodeURIComponent( fragment ) );
+
+					setURL( fragment );
 
 				}
 
@@ -270,6 +279,78 @@
 				compileButton.textContent = 'compiled succesfully';
 
 			}
+
+			var dummyFunction = function() {};
+
+			function setURL( shaderString ) {
+
+				compressor.compress( shaderString, 1, function( bytes ) {
+
+					var hex = convertBytesToHex( bytes );
+					window.location.replace( '#' + hex );
+
+				},
+				dummyFunction );
+
+			}
+
+			function readURL( hash ) {
+
+				var bytes = convertHexToBytes( hash );
+
+				compressor.decompress( bytes, function( text ) {
+
+					code.value = text;
+
+					compile();
+
+				},
+				dummyFunction );
+
+			}
+
+			function convertHexToBytes( text ) {
+
+				var tmpHex, array = [];
+
+				for ( var i = 0; i < text.length; i += 2 ) {
+
+					tmpHex = text.substring( i, i + 2 );
+					array.push( parseInt( tmpHex, 16 ) );
+
+				}
+
+				return array;
+
+			}
+
+			function convertBytesToHex( byteArray ) {
+
+				var tmpHex, hex = "";
+
+				for ( var i = 0, il = byteArray.length; i < il; i ++ ) {
+
+					if ( byteArray[ i ] < 0 ) {
+
+						byteArray[ i ] = byteArray[ i ] + 256;
+
+					}
+
+					tmpHex = byteArray[ i ].toString( 16 );
+
+					// add leading zero
+
+					if ( tmpHex.length == 1 ) tmpHex = "0" + tmpHex;
+
+					hex += tmpHex;
+
+				}
+
+				return hex;
+
+			}
+
+			//
 
 			function createShader( src, type ) {
 
@@ -298,6 +379,8 @@
 
 			}
 
+			//
+
 			function onWindowResize( event ) {
 
 				code.style.top = '75px';
@@ -314,6 +397,8 @@
 				gl.viewport( 0, 0, canvas.width, canvas.height );
 
 			}
+
+			//
 
 			function animate() {
 
