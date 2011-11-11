@@ -117,7 +117,7 @@
 			// Greetings to Iq/RGBA! ;)
 
 			var quality = 1, code, canvas, gl, buffer, currentProgram, compileButton,
-			vertex_position, parameters = { start_time: Date.now(), time: 0, screenWidth: 0, screenHeight: 0 };
+			vertex_position, parameters = { start_time: Date.now(), time: 0, mouseX: 0, mouseY: 0, screenWidth: 0, screenHeight: 0 };
 
 			init();
 			animate();
@@ -190,7 +190,7 @@
 
 				} else {
 
-					readURL( '5d00000100720200000000000000119a48c65ab5aec1f910f780dfdfe473e599a211a90304ab6a650a0bdc710e60d9ef6827f7e37c460aba047c4de9e20bce74f0e6773fe3b4b7d379f6f885aacf346330fef1ffee566139968f57db637a7fabad10c58d9ee59035429f68fd37377ae69569d2c30059acf29a58281c4208405f4e5bc30a50a7c8e7027cfa1ecffac22c377e315721df5df09d053c0ad83443808080b48ad5436340a8c09dfb1728fae483ebf19ff6659d982ab333081cac1172e50f2387c182cfa580d8d4c9750425895835f943e9c0c4071d2ecd0e61e6e65e9b573771dca05873425aad4ad69ea079b9b8481dc3862d5ea10e087f563db734e3298b538a774aac2a000f3595fab1943fc328169b6eff7ce9fa00' );
+					readURL( '5d00000100980200000000000000119a48c65ab5aec1f910f780dfdfe473e599a211a90304ab6a650a0bdc710e60d9ef6827f7e37c460aba047c4de9e20bce74f0e6773fe3b4b7d379f6f885aacf345507100f3a9c00b35ece337c99a5b1914781cf1261e20c852069d976e19e0626035accf277b6d605f6f79b5b829acddc05289378c5e94ed5e728c24b0c22e42ddd138eaafc87372557f72d2dd04c4538fde32958381dcc055e8bb8c995f6f131916a68f6a9eae6d314121e0fbcfc26aed27e4a9b352caf72ef1b2d94e7a0c30bb73bdceac95fd45a10ae5d0cba4fb744a5d815c78fe091f2be7dae03592fa89dc80524475f0d296359c067472f2efcf9f2695185e5a5d2a5cdf31d8ea098e48054863d3489cf72c148e9ac8fbb401c229d9e08e9b8ff39ced000' );
 
 				}
 
@@ -272,10 +272,17 @@
 				gl.bindBuffer( gl.ARRAY_BUFFER, buffer );
 				gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( [ - 1.0, - 1.0, 1.0, - 1.0, - 1.0, 1.0, 1.0, - 1.0, 1.0, 1.0, - 1.0, 1.0 ] ), gl.STATIC_DRAW );
 
-				if ( code.value ) compile();
+				document.addEventListener( 'mousemove', function ( event ) {
+
+					parameters.mouseX = event.clientX / window.innerWidth;
+					parameters.mouseY = 1 - event.clientY / window.innerHeight;
+
+				}, false );
 
 				onWindowResize();
 				window.addEventListener( 'resize', onWindowResize, false );
+
+				if ( code.value ) compile();
 
 			}
 
@@ -310,7 +317,6 @@
 				if ( currentProgram ) {
 
 					gl.deleteProgram( currentProgram );
-
 					setURL( fragment );
 
 				}
@@ -343,7 +349,6 @@
 				compressor.decompress( bytes, function( text ) {
 
 					code.value = text;
-
 					compile();
 
 				},
@@ -467,6 +472,7 @@
 				// Set values to program variables
 
 				gl.uniform1f( gl.getUniformLocation( currentProgram, 'time' ), parameters.time / 1000 );
+				gl.uniform2f( gl.getUniformLocation( currentProgram, 'mouse' ), parameters.mouseX, parameters.mouseY );
 				gl.uniform2f( gl.getUniformLocation( currentProgram, 'resolution' ), parameters.screenWidth, parameters.screenHeight );
 
 				// Render geometry
