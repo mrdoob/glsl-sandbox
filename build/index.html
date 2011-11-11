@@ -47,7 +47,7 @@
 
 			}
 
-			button {
+			button, select {
 
 				padding: 8px 12px 8px 12px;
 
@@ -67,9 +67,16 @@
 
 			}
 
-			button:hover {
+			button:hover, select:hover {
 
 				opacity: 1;
+
+			}
+
+			option {
+
+				color: #ffffff;
+				background-color: #000000;
 
 			}
 
@@ -109,7 +116,7 @@
 
 			// Greetings to Iq/RGBA! ;)
 
-			var code, canvas, gl, buffer, currentProgram, compileButton,
+			var quality = 1, code, canvas, gl, buffer, currentProgram, compileButton,
 			vertex_position, parameters = { start_time: Date.now(), time: 0, screenWidth: 0, screenHeight: 0 };
 
 			init();
@@ -201,12 +208,14 @@
 
 						button.textContent = 'show code';
 						code.style.visibility = 'hidden';
+						select.style.visibility = 'hidden';
 						compileButton.style.visibility = 'hidden';
 
 					} else {
 
 						button.textContent = 'hide code';
 						code.style.visibility = 'visible';
+						select.style.visibility = 'visible';
 						compileButton.style.visibility = 'visible';
 
 					}
@@ -214,6 +223,24 @@
 				}, false );
 				tools.appendChild( button );
 
+				var select = document.createElement( 'select' );
+
+				for ( var i = 1; i <= 4; i ++ ) {
+
+					var option = document.createElement( 'option' );
+					option.textContent = i + 'x'+ i;
+					select.appendChild( option );
+
+				}
+
+				select.addEventListener( 'change', function ( event ) {
+
+					quality = event.target.selectedIndex + 1;
+					onWindowResize();
+
+				}, false );
+
+				tools.appendChild( select );
 
 				compileButton = document.createElement( 'button' );
 				compileButton.textContent = 'compile';
@@ -403,8 +430,11 @@
 				code.style.width = ( window.innerWidth - 75 ) + 'px';
 				code.style.height = ( window.innerHeight - 125 ) + 'px';
 
-				canvas.width = window.innerWidth;
-				canvas.height = window.innerHeight;
+				canvas.width = window.innerWidth / quality;
+				canvas.height = window.innerHeight / quality;
+
+				canvas.style.width = window.innerWidth + 'px';
+				canvas.style.height = window.innerHeight + 'px';
 
 				parameters.screenWidth = canvas.width;
 				parameters.screenHeight = canvas.height;
