@@ -116,7 +116,8 @@
 
 			// Greetings to Iq/RGBA! ;)
 
-			var quality = 1, code, canvas, gl, buffer, currentProgram, compileButton,
+			var quality = 2, quality_levels = [ 0.5, 1, 2, 4, 8 ];
+			var code, canvas, gl, buffer, currentProgram, compileButton,
 			vertex_position, parameters = { start_time: Date.now(), time: 0, mouseX: 0, mouseY: 0, screenWidth: 0, screenHeight: 0 };
 
 			init();
@@ -225,17 +226,18 @@
 
 				var select = document.createElement( 'select' );
 
-				for ( var i = 1; i <= 4; i ++ ) {
+				for ( var i = 0; i < quality_levels.length; i ++ ) {
 
 					var option = document.createElement( 'option' );
-					option.textContent = i + 'x'+ i;
+					option.textContent = quality_levels[ i ];
+					if ( quality_levels[ i ] == quality ) option.selected = true;
 					select.appendChild( option );
 
 				}
 
 				select.addEventListener( 'change', function ( event ) {
 
-					quality = event.target.selectedIndex + 1;
+					quality = quality_levels[ event.target.selectedIndex ];
 					onWindowResize();
 
 				}, false );
