@@ -141,7 +141,7 @@
 			var quality = 2, quality_levels = [ 0.5, 1, 2, 4, 8 ];
 			var toolbar, compileButton, fullscreenButton;
 			var code, canvas, gl, buffer, currentProgram, vertexPosition,
-			parameters = { startTime: Date.now(), time: 0, mouseX: 0, mouseY: 0, screenWidth: 0, screenHeight: 0 },
+			parameters = { startTime: Date.now(), time: 0, mouseX: 0.5, mouseY: 0.5, screenWidth: 0, screenHeight: 0 },
 			frontTarget, backTarget, screenProgram;
 
 			init();
@@ -296,7 +296,7 @@
 
 				try {
 
-					gl = canvas.getContext( 'experimental-webgl' );
+					gl = canvas.getContext( 'experimental-webgl', { preserveDrawingBuffer: true } );
 
 				} catch( error ) { }
 
@@ -326,6 +326,24 @@
 				if ( code.value ) compile();
 
 				compileScreenProgram();
+
+			}
+
+			function save( width, height ) {
+
+				canvas.width = width;
+				canvas.height = height;
+				parameters.screenWidth = width;
+				parameters.screenHeight = height;
+
+				gl.viewport( 0, 0, width, height );
+				createRenderTargets();
+
+				render();
+
+				window.open( canvas.toDataURL('image/png'), 'mywindow' );
+
+				onWindowResize();
 
 			}
 
