@@ -447,11 +447,11 @@
 				gl.bindTexture( gl.TEXTURE_2D, target.texture );
 				gl.texImage2D( gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null );
 
-				gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT );
-				gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT );
+				gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE );
+				gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE );
 
-				gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR );
-				gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR );
+				gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST );
+				gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST );
 
 				gl.bindFramebuffer( gl.FRAMEBUFFER, target.framebuffer );
 				gl.framebufferTexture2D( gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, target.texture, 0 );
@@ -551,14 +551,6 @@
 
 			}
 
-			function nextPOT( value ) {
-
-				var pot = 1;
-				while ( pot < value ) pot <<= 1;
-				return pot;
-
-			}
-
 			//
 
 			function createShader( src, type ) {
@@ -599,8 +591,8 @@
 				code.style.width = ( window.innerWidth - 75 ) + 'px';
 				code.style.height = ( window.innerHeight - 125 ) + 'px';
 
-				canvas.width = nextPOT( window.innerWidth / quality );
-				canvas.height = nextPOT( window.innerHeight / quality );
+				canvas.width = window.innerWidth / quality;
+				canvas.height = window.innerHeight / quality;
 
 				canvas.style.width = window.innerWidth + 'px';
 				canvas.style.height = window.innerHeight + 'px';
