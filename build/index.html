@@ -116,8 +116,10 @@
 
 			// Greetings to Iq/RGBA! ;)
 
-			var quality = 1, code, canvas, gl, buffer, currentProgram, compileButton,
-			vertex_position, parameters = { start_time: Date.now(), time: 0, mouseX: 0, mouseY: 0, screenWidth: 0, screenHeight: 0 };
+			var quality = 1,
+			code, canvas, gl, buffer, currentProgram, compileButton,
+			vertexPosition, parameters = { startTime: Date.now(), time: 0, mouseX: 0, mouseY: 0, screenWidth: 0, screenHeight: 0 },
+			uniformsCache = {};
 
 			init();
 			animate();
@@ -266,7 +268,7 @@
 
 				}
 
-				// Create Vertex buffer (2 triangles)
+				// Create vertex buffer (2 triangles)
 
 				buffer = gl.createBuffer();
 				gl.bindBuffer( gl.ARRAY_BUFFER, buffer );
@@ -325,6 +327,28 @@
 
 				compileButton.style.color = '#00ff00';
 				compileButton.textContent = 'compiled succesfully';
+
+				// Cache uniforms
+
+				cacheUniformLocation( 'time' );
+				cacheUniformLocation( 'mouse' );
+				cacheUniformLocation( 'resolution' );
+
+				// Load program into GPU
+
+				gl.useProgram( currentProgram );
+
+				// Set up buffers
+
+				gl.bindBuffer( gl.ARRAY_BUFFER, buffer );
+				gl.vertexAttribPointer( vertexPosition, 2, gl.FLOAT, false, 0, 0 );
+				gl.enableVertexAttribArray( vertexPosition );
+
+			}
+
+			function cacheUniformLocation( label ) {
+
+				uniformsCache[ label ] = gl.getUniformLocation( currentProgram, label );
 
 			}
 
@@ -461,27 +485,19 @@
 
 				if ( !currentProgram ) return;
 
-				parameters.time = Date.now() - parameters.start_time;
+				parameters.time = Date.now() - parameters.startTime;
 
 				gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
 
-				// Load program into GPU
-
-				gl.useProgram( currentProgram );
-
 				// Set values to program variables
 
-				gl.uniform1f( gl.getUniformLocation( currentProgram, 'time' ), parameters.time / 1000 );
-				gl.uniform2f( gl.getUniformLocation( currentProgram, 'mouse' ), parameters.mouseX, parameters.mouseY );
-				gl.uniform2f( gl.getUniformLocation( currentProgram, 'resolution' ), parameters.screenWidth, parameters.screenHeight );
+				gl.uniform1f( uniformsCache[ 'time' ], parameters.time / 1000 );
+				gl.uniform2f( uniformsCache[ 'mouse' ], parameters.mouseX, parameters.mouseY );
+				gl.uniform2f( uniformsCache[ 'resolution' ], parameters.screenWidth, parameters.screenHeight );
 
 				// Render geometry
 
-				gl.bindBuffer( gl.ARRAY_BUFFER, buffer );
-				gl.vertexAttribPointer( vertex_position, 2, gl.FLOAT, false, 0, 0 );
-				gl.enableVertexAttribArray( vertex_position );
 				gl.drawArrays( gl.TRIANGLES, 0, 6 );
-				gl.disableVertexAttribArray( vertex_position );
 
 			}
 
