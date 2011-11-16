@@ -139,7 +139,7 @@
 			// Greetings to Iq/RGBA! ;)
 
 			var quality = 2, quality_levels = [ 0.5, 1, 2, 4, 8 ];
-			var toolbar, compileButton, fullscreenButton, saveCodeButton, saveImageButton;
+			var toolbar, compileButton, fullscreenButton, saveCodeButton, saveImageButton, loadCodeButton;
 			var code, canvas, gl, buffer, currentProgram, vertexPosition,
 			parameters = { startTime: Date.now(), time: 0, mouseX: 0.5, mouseY: 0.5, screenWidth: 0, screenHeight: 0 },
 			frontTarget, backTarget, screenProgram;
@@ -246,6 +246,13 @@
 				saveCodeButton.textContent = 'save code';
 				saveCodeButton.addEventListener( 'click', saveCode, false );
 				rightside.appendChild( saveCodeButton );
+				
+				 
+				loadCodeButton = document.createElement( 'button' );
+				loadCodeButton.textContent = 'load code';
+				loadCodeButton.addEventListener( 'click', loadCode, false );
+				rightside.appendChild( loadCodeButton );
+				
 				
 				saveImageButton = document.createElement( 'button' );
 				saveImageButton.textContent = 'save image';
@@ -379,7 +386,56 @@
 			}
 			
 			function saveCode() {
-				console.log('code', document.getElementById( 'code' ).value);
+				var sourcecode = code.value;
+				console.log('Saving code', sourcecode);
+				saveCodeToLocalStorage(sourcecode, 'test');
+			}
+			
+			function loadCode() {
+				
+				var sourcecode = loadCodeFromLocalStorage('test');
+				if (sourcecode) {
+					console.log('Loading code', sourcecode);
+					code.value = sourcecode;
+					compile();
+				}
+				
+			}
+			
+			function saveCodeToLocalStorage(code, name) {
+				
+				var sandbox = getLocalStorage();
+				
+				sandbox[name] = code;
+				
+				localStorage.setItem('glslsandbox') = JSON.stringify(sandbox);
+			
+			}
+			
+			function getLocalStorage() {
+				
+				var sandboxStorage = localStorage.getItem('glslsandbox');
+				var sandbox;
+				
+				if (sandboxStorage === undefined) {
+					sandbox = {};
+				} else {
+					sandbox = JSON.parse(sandboxStorage);
+				}
+				
+				return sandbox;
+			}
+			
+			function loadCodeFromLocalStorage(name) {
+				
+				
+				var sandbox = getLocalStorage();
+				
+				if (sandbox[name]) {
+					var sourcecode = sandbox[name];;
+					return sourcecode;
+				}
+				
 			}
 
 			function compile() {
