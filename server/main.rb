@@ -119,10 +119,22 @@ get %r{/item/(\d+)(/(\d+))?} do
         item=code['versions'].last
     end
 
-    if item
-        item['code']
+    if code['user']
+        user=code['user']
     else
-        '// item not found'
+        user=false
+    end
+
+    if item
+        {
+            :code => item['code'],
+            :user => user
+        }.to_json
+    else
+        {
+            :code => '// item not found',
+            :user => false
+        }.to_json
     end
 end
 
@@ -130,11 +142,14 @@ post %r{^/(new)$} do
     counter=increment_code_counter
     body=request.body.read
 
+    code_data=JSON.parse(body)
+
     data={
         :_id => counter,
         :created_at => Time.now,
         :modified_at => Time.now,
-        :versions => []
+        :versions => [],
+        :user => code_data['user']
     }
 
     CODE.insert(data)
@@ -148,6 +163,7 @@ end
 post  %r{^/(\d+)(/(\d+))?$} do
     code_id=params[:captures][0].to_i
     body=request.body.read
+
     save_version(code_id, body)
 
     code=CODE.find_one({ :_id => code_id })

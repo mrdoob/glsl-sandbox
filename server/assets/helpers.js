@@ -1,8 +1,26 @@
 
 var saveButton;
+var effect_owner=false;
 
 function initialize_compressor(){
 	return null;
+}
+
+function initialize_helper() {
+	if ( !localStorage.getItem('glslsandbox_user') )
+		localStorage.setItem('glslsandbox_user', generate_user_id());
+}
+
+function generate_user_id() {
+	return (Math.random()*0x10000000|0).toString(16);
+}
+
+function get_user_id() {
+	return localStorage.getItem('glslsandbox_user');
+}
+
+function am_i_owner() {
+	return (effect_owner==false || effect_owner==get_user_id());
 }
 
 function load_url_code() {
@@ -51,10 +69,16 @@ function save() {
 
 	data={
 		"code": document.getElementById( 'code' ).value,
-		"image": img
+		"image": img,
+		"user": get_user_id()
 	}
 
-	$.post(window.location.href,
+	loc='/new';
+
+	if(am_i_owner())
+		loc=window.location.href;
+
+	$.post(loc,
 		JSON.stringify(data),
 		function(result) {
 			window.location.replace('/'+result);
@@ -62,8 +86,15 @@ function save() {
 }
 
 function load_code(hash) {
-	$.get('/item/'+hash, function(result) {
-		code.value=result;
+	$.getJSON('/item/'+hash, function(result) {
+		code.value=result['code'];
+		effect_owner=result['user'];
+
+		if(am_i_owner())
+			saveButton.textContent = 'save';
+		else
+			saveButton.textContent = 'fork';
+
 		compile();
 	});
 }

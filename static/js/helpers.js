@@ -4,6 +4,9 @@ function initialize_compressor() {
 	return compressor;
 }
 
+function initialize_helper() {
+}
+
 function load_url_code() {
 	if ( window.location.hash ) {
 
