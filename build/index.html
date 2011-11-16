@@ -139,7 +139,7 @@
 			// Greetings to Iq/RGBA! ;)
 
 			var quality = 2, quality_levels = [ 0.5, 1, 2, 4, 8 ];
-			var toolbar, compileButton, fullscreenButton;
+			var toolbar, compileButton, fullscreenButton, saveCodeButton, saveImageButton;
 			var code, canvas, gl, buffer, currentProgram, vertexPosition,
 			parameters = { startTime: Date.now(), time: 0, mouseX: 0.5, mouseY: 0.5, screenWidth: 0, screenHeight: 0 },
 			frontTarget, backTarget, screenProgram;
@@ -240,6 +240,18 @@
 
 				}, false );
 				rightside.appendChild( fullscreenButton );
+				
+				
+				saveCodeButton = document.createElement( 'button' );
+				saveCodeButton.textContent = 'save code';
+				saveCodeButton.addEventListener( 'click', saveCode, false );
+				rightside.appendChild( saveCodeButton );
+				
+				saveImageButton = document.createElement( 'button' );
+				saveImageButton.textContent = 'save image';
+				saveImageButton.addEventListener( 'click', saveImage, false );
+				rightside.appendChild( saveImageButton );
+				
 
 				var button = document.createElement( 'button' );
 				button.textContent = 'gallery';
@@ -260,6 +272,8 @@
 						code.style.visibility = 'hidden';
 						select.style.visibility = 'hidden';
 						compileButton.style.visibility = 'hidden';
+						//rightside.style.visibility = 'hidden';
+						
 
 					} else {
 
@@ -267,6 +281,8 @@
 						code.style.visibility = 'visible';
 						select.style.visibility = 'visible';
 						compileButton.style.visibility = 'visible';
+						//rightside.style.visibility = 'visible';
+						
 
 					}
 
@@ -355,6 +371,15 @@
 
 				onWindowResize();
 
+			}
+			
+			
+			function saveImage() {
+				save(1024, 768);
+			}
+			
+			function saveCode() {
+				console.log('code', document.getElementById( 'code' ).value);
 			}
 
 			function compile() {
