@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>GLSL Sandbox Gallery</title>
+		<meta charset="utf-8">
+		<style>
+			body {
+				background-color: #000000;
+				font: 13px Tahoma, Arial, Helvetica, sans-serif;
+				margin: 3em 4em;
+				color: #888;
+			}
+			a:not(h1){
+				color: #aaa;
+				text-decoration: none;
+				border-bottom: 1px solid #444;
+			}
+			a:hover{
+				color: #009DE9;
+				border-bottom: 1px solid #009DE9;
+			}
+			
+			h1, h2{
+				color: #009DE9;
+				font: 28px Tahoma, Arial, Helvetica, sans-serif;;
+				font-weight: normal;
+				margin-bottom: 7px;
+			}
+			h2{ 
+				font-size: 22px;
+				margin-top: 2em;
+			}
+			#gallery{
+				margin-top: 4em;
+			}
+			#gallery>a{
+				border: none;
+			}
+			#gallery img{
+				margin-right: 3em;
+				margin-bottom: 2em;
+				width: 200px;
+				height: 100px;
+				border: 1px solid #212121;
+			}
+			#gallery img:hover{
+				box-shadow: 0px 0px 24px 10px #263D65;
+				border: 1px solid #316FAE;
+			}
+			label{
+				display: block;
+				margin-top: 1.4em;
+				margin-bottom: 0.6em;
+				font-size: 14px;
+				color: #009DE9;
+			}
+			input, textarea{
+				background: #222;
+				font-size: 14px;
+				color: #ccc;
+				border: none;
+				padding: 5px 10px;
+				outline: none;
+				cursor: pointer;
+			}
+			input[type=submit]:hover{
+				color: #009DE9;
+			}
+		</style>
+		<script>function $(id,m){document.getElementById(id).style.display= m?'block':'none';}</script>
+	</head>
+	<body>
+
+<div id="header">		
+<a href="http://glsl.heroku.com/"><h1>GLSL Sandbox Gallery</h1></a>
+<a href="/new">Create new effect!</a> &nbsp;&nbsp;/&nbsp;
+<a href="https://github.com/mrdoob/glsl-sandbox">github</a> &nbsp;&nbsp;/&nbsp;
+gallery by <a href="http://twitter.com/thevaw">@thevaw</a> and <a href="http://twitter.com/feiss">@feiss</a> &nbsp;/&nbsp; editor by <a href="http://twitter.com/mrdoob">@mrdoob</a>, <a href="http://twitter.com/mrkishi">@mrkishi</a>, <a href="http://twitter.com/p01">@p01</a>, <a href="http://twitter.com/alteredq">@alteredq</a> and <a href="http://twitter.com/kusmabite">@kusmabite</a>
+</div>
+
+<div id="gallery">
+
+<% effects.each do |effect| %>
+	<a href='/<%= effect['_id'] %>/<%= effect['versions'].length-1 %>'><img src='<%= effect['image'] %>'></a>
+<% end %>
+
+</div>
+
+<form action="index.php" method="post" accept-charset="utf-8" id="form" enctype="multipart/form-data" style="display: none">
+	<h2>Send your code</h2>
+	Use this form or send me the url by twitter to <a href="http://twitter.com/feiss">@feiss</a><br><br>
+	Do you want to be credited? <br>Don't forget to include comments in your code with your name/nick and contact/link/twitter!<br>
+	<!--	<label for="thumbnail">Thumbnail</label>
+	<input type="file" name="thumbnail" value="" id="thumbnail"><br>
+	(Optional. will be resized to 200x100)<br>
+-->	<label for="code">Your glsl_sandbox URL</label>
+	<textarea name="code" rows="5" cols="60" id="code"></textarea><br>
+
+<!--
+	<label for="thumbnail">Are you a robot?</label>
+	1 + 9=&nbsp;<input type="text" name="c" value="" id="captcha" size="2"><br><br>
+-->	
+	<p><input type="submit" value="   Send   ">&nbsp;&nbsp;&nbsp;&nbsp;
+	<a href="javascript:;" onclick="$('form', false);$('gallery',true)">Cancel</a>	
+	</p>
+</form>
+<a name="send"></a>
+</body>
+</html>
