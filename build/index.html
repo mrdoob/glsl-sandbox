@@ -83,6 +83,7 @@
 	<body>
 
 		<script src="js/lzma.js"></script>
+		<script src="js/base64.js"></script>
 
 		<script id="fragmentShader" type="x-shader/x-fragment">
 
@@ -139,7 +140,7 @@
 			// Greetings to Iq/RGBA! ;)
 
 			var quality = 2, quality_levels = [ 0.5, 1, 2, 4, 8 ];
-			var toolbar, compileButton, fullscreenButton;
+			var toolbar, compileButton, fullscreenButton, saveCodeButton, saveImageButton, loadCodeButton, saveCodeToFileButton ;
 			var code, canvas, gl, buffer, currentProgram, vertexPosition,
 			parameters = { startTime: Date.now(), time: 0, mouseX: 0.5, mouseY: 0.5, screenWidth: 0, screenHeight: 0 },
 			frontTarget, backTarget, screenProgram;
@@ -240,6 +241,29 @@
 
 				}, false );
 				rightside.appendChild( fullscreenButton );
+				
+				
+				saveCodeButton = document.createElement( 'button' );
+				saveCodeButton.textContent = 'save code';
+				saveCodeButton.addEventListener( 'click', saveCode, false );
+				rightside.appendChild( saveCodeButton );
+				
+				 
+				loadCodeButton = document.createElement( 'button' );
+				loadCodeButton.textContent = 'load code';
+				loadCodeButton.addEventListener( 'click', loadCode, false );
+				rightside.appendChild( loadCodeButton );
+				
+				saveCodeToFileButton = document.createElement( 'button' );
+				saveCodeToFileButton.textContent = 'save code to file';
+				saveCodeToFileButton.addEventListener( 'click', saveCodeToFile, false );
+				rightside.appendChild( saveCodeToFileButton );
+				
+				saveImageButton = document.createElement( 'button' );
+				saveImageButton.textContent = 'save image';
+				saveImageButton.addEventListener( 'click', saveImage, false );
+				rightside.appendChild( saveImageButton );
+				
 
 				var button = document.createElement( 'button' );
 				button.textContent = 'gallery';
@@ -260,6 +284,8 @@
 						code.style.visibility = 'hidden';
 						select.style.visibility = 'hidden';
 						compileButton.style.visibility = 'hidden';
+						//rightside.style.visibility = 'hidden';
+						
 
 					} else {
 
@@ -267,6 +293,8 @@
 						code.style.visibility = 'visible';
 						select.style.visibility = 'visible';
 						compileButton.style.visibility = 'visible';
+						//rightside.style.visibility = 'visible';
+						
 
 					}
 
@@ -355,6 +383,90 @@
 
 				onWindowResize();
 
+			}
+			
+			
+			function saveImage() {
+				save(1024, 768);
+			}
+			
+			function saveCode() {
+				var sourcecode = code.value;
+				
+				// Saves to local storage here
+				saveCodeToLocalStorage(sourcecode, 'test');
+			
+			}
+			
+			function saveCodeToFile() {
+				var sourcecode = code.value;
+				
+				saveToFile(sourcecode);
+				
+			}
+			
+			function loadCodeFromFile() {
+				
+				// TODO
+				// Use File API via input field / drag & drop
+				
+			}
+			
+			function loadCode() {
+				
+				var sourcecode = loadCodeFromLocalStorage('test');
+				if (sourcecode) {
+					console.log('Loading code', sourcecode);
+					code.value = sourcecode;
+					compile();
+				}
+				
+			}
+			
+			function saveToFile(code) {
+				// we could also create a zip file if we use
+				// (https://github.com/Stuk/jszip/tree) for download
+				
+				var encoded = Base64.encode(code);
+				var url = 'data:application/octet-stream;charset=utf-8;base64,' + encoded;
+				window.open( url, 'mywindow' );
+
+			}
+			
+			function saveCodeToLocalStorage(code, name) {
+				
+				var sandbox = getLocalStorage();
+				
+				sandbox[name] = code;
+				
+				localStorage.setItem('glslsandbox', JSON.stringify(sandbox));
+			
+			}
+			
+			function getLocalStorage() {
+				
+				var sandboxStorage = localStorage.getItem('glslsandbox');
+				var sandbox;
+				
+				if (sandboxStorage === undefined) {
+					sandbox = {};
+				} else {
+					sandbox = JSON.parse(sandboxStorage);
+				}
+				
+				return sandbox;
+			}
+			
+			function loadCodeFromLocalStorage(name) {
+				
+				
+				var sandbox = getLocalStorage();
+				
+				if (sandbox[name]) {
+					var sourcecode = sandbox[name];;
+					return sourcecode;
+				}
+				
 			}
 
 			function compile() {
@@ -692,7 +804,7 @@
 				backTarget = tmp;
 
 			}
-
+			
 		</script>
 
 	</body>
