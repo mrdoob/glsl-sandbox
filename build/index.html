@@ -83,6 +83,7 @@
 	<body>
 
 		<script src="js/lzma.js"></script>
+		<script src="js/base64.js"></script>
 
 		<script id="fragmentShader" type="x-shader/x-fragment">
 
@@ -139,7 +140,7 @@
 			// Greetings to Iq/RGBA! ;)
 
 			var quality = 2, quality_levels = [ 0.5, 1, 2, 4, 8 ];
-			var toolbar, compileButton, fullscreenButton, saveCodeButton, saveImageButton, loadCodeButton;
+			var toolbar, compileButton, fullscreenButton, saveCodeButton, saveImageButton, loadCodeButton, saveCodeToFileButton ;
 			var code, canvas, gl, buffer, currentProgram, vertexPosition,
 			parameters = { startTime: Date.now(), time: 0, mouseX: 0.5, mouseY: 0.5, screenWidth: 0, screenHeight: 0 },
 			frontTarget, backTarget, screenProgram;
@@ -253,6 +254,10 @@
 				loadCodeButton.addEventListener( 'click', loadCode, false );
 				rightside.appendChild( loadCodeButton );
 				
+				saveCodeToFileButton = document.createElement( 'button' );
+				saveCodeToFileButton.textContent = 'save code to file';
+				saveCodeToFileButton.addEventListener( 'click', saveCodeToFile, false );
+				rightside.appendChild( saveCodeToFileButton );
 				
 				saveImageButton = document.createElement( 'button' );
 				saveImageButton.textContent = 'save image';
@@ -387,8 +392,24 @@
 			
 			function saveCode() {
 				var sourcecode = code.value;
-				console.log('Saving code', sourcecode);
+				
+				// Saves to local storage here
 				saveCodeToLocalStorage(sourcecode, 'test');
+			
+			}
+			
+			function saveCodeToFile() {
+				var sourcecode = code.value;
+				
+				saveToFile(sourcecode);
+				
+			}
+			
+			function loadCodeFromFile() {
+				
+				// TODO
+				// Use File API via input field / drag & drop
+				
 			}
 			
 			function loadCode() {
@@ -402,13 +423,23 @@
 				
 			}
 			
+			function saveToFile(code) {
+				// we could also create a zip file if we use
+				// (https://github.com/Stuk/jszip/tree) for download
+				
+				var encoded = Base64.encode(code);
+				var url = 'data:application/octet-stream;charset=utf-8;base64,' + encoded;
+				window.open( url, 'mywindow' );
+
+			}
+			
 			function saveCodeToLocalStorage(code, name) {
 				
 				var sandbox = getLocalStorage();
 				
 				sandbox[name] = code;
 				
-				localStorage.setItem('glslsandbox') = JSON.stringify(sandbox);
+				localStorage.setItem('glslsandbox', JSON.stringify(sandbox));
 			
 			}
 			
@@ -773,7 +804,7 @@
 				backTarget = tmp;
 
 			}
-
+			
 		</script>
 
 	</body>
