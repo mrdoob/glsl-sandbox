@@ -373,6 +373,8 @@ void main( void ) {
 					compileButton.style.color = '#ff0000';
 					compileButton.textContent = 'compiled with errors';
 
+					set_save_button('hidden');
+
 					return;
 
 				}
@@ -388,6 +390,8 @@ void main( void ) {
 
 				compileButton.style.color = '#00ff00';
 				compileButton.textContent = 'compiled succesfully';
+
+				set_save_button('visible');
 
 				// Cache uniforms
 
@@ -525,6 +529,8 @@ void main( void ) {
 
 					compileButton.style.color = '#ff0000';
 					compileButton.textContent = 'compiled with errors';
+
+					set_save_button('hidden');
 
 					return null;
 
