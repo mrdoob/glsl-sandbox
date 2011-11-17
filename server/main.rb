@@ -74,7 +74,10 @@ def save_version(code_id, code)
 end
 
 get '/' do
-    effects=CODE.find({}, {:sort => [:modified_at, 'descending']})
+    effects=CODE.find({}, {
+        :sort => [:modified_at, 'descending'],
+        :limit => 50
+    })
 
     ef=Effects.new(effects)
 
