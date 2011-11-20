@@ -165,7 +165,7 @@ void main( void ) {
 			// Greetings to Iq/RGBA! ;)
 
 			var quality = 2, quality_levels = [ 0.5, 1, 2, 4, 8 ];
-			var toolbar, compileButton, fullscreenButton;
+			var toolbar, compileButton, fullscreenButton, compileTimer;
 			var code, canvas, gl, buffer, currentProgram, vertexPosition,
 			parameters = { startTime: Date.now(), time: 0, mouseX: 0.5, mouseY: 0.5, screenWidth: 0, screenHeight: 0 },
 			frontTarget, backTarget, screenProgram;
@@ -214,8 +214,9 @@ void main( void ) {
 					if ( event.keyCode == 38 ) return;
 					if ( event.keyCode == 39 ) return;
 					if ( event.keyCode == 40 ) return;
-
-					compile();
+					
+					clearTimeout(compileTimer);
+					compileTimer = setTimeout(compile, 500);
 
 				}, false );
 
