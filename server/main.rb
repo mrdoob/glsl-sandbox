@@ -7,20 +7,6 @@ require 'erb'
 
 require 'pp'
 
-class Effects
-    def initialize(effects)
-        @effects=effects
-    end
-
-    def bind
-        binding
-    end
-
-    def effects
-        @effects
-    end
-end
-
 configure do
     set :public_folder, 'public'
 
@@ -41,7 +27,45 @@ configure do
             :counter => 0
         })
     end
+
+    EFFECTS_PER_PAGE=50
 end
+
+class Effects
+    def initialize(effects, extra={})
+        @effects=effects
+        @extra={
+            :page => 0,
+            :count => 0,
+            :effects_per_page => EFFECTS_PER_PAGE
+        }.merge(extra)
+    end
+
+    def bind
+        binding
+    end
+
+    def effects
+        @effects
+    end
+
+    def extra
+        @extra
+    end
+
+    def previous_page
+        if @extra[:page]>0
+            @extra[:page]-1
+        end
+    end
+
+    def next_page
+        if @extra[:count]>=((@extra[:page]+1)*@extra[:effects_per_page])
+            @extra[:page]+1
+        end
+    end
+end
+
 
 def increment_code_counter
     counter=COUNTERS.find_and_modify({
@@ -74,12 +98,24 @@ def save_version(code_id, code)
 end
 
 get '/' do
+    if(params[:page])
+        page=params[:page].to_i
+    else
+        page=0
+    end
+
+    count=CODE.count();
+
     effects=CODE.find({}, {
         :sort => [:modified_at, 'descending'],
-        :limit => 50
+        :limit => EFFECTS_PER_PAGE,
+        :skip => page*EFFECTS_PER_PAGE
     })
 
-    ef=Effects.new(effects)
+    ef=Effects.new(effects,
+        :page   => page,
+        :count  => count
+    )
 
     GALLERY.result(ef.bind)
 end
