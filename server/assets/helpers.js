@@ -1,6 +1,7 @@
 
 var saveButton;
 var effect_owner=false;
+var original_code='';
 
 function initialize_compressor(){
 	return null;
@@ -31,6 +32,7 @@ function load_url_code() {
 	} else {
 
 		code.value = document.getElementById( 'example' ).text;
+		original_code = document.getElementById( 'example' ).text;
 
 	}
 }
@@ -43,7 +45,10 @@ function add_save_button() {
 }
 
 function set_save_button(visibility) {
-	saveButton.style.visibility = visibility;
+	if(original_code==code.value)
+		saveButton.style.visibility = 'hidden';
+	else
+		saveButton.style.visibility = visibility;
 }
 
 function get_img( width, height ) {
@@ -88,6 +93,7 @@ function save() {
 function load_code(hash) {
 	$.getJSON('/item/'+hash, function(result) {
 		code.value=result['code'];
+		original_code=result['code'];
 		effect_owner=result['user'];
 
 		if(am_i_owner())
