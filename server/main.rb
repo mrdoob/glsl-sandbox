@@ -191,6 +191,11 @@ post %r{^/(new)$} do
         :user => code_data['user']
     }
 
+    if code_data['parent']
+        m=code_data['parent'].match(%r{^/(\d+)(/.*)?})
+        data[:parent] = m[1].to_i if m
+    end
+
     CODE.insert(data)
 
     save_version(counter, body)

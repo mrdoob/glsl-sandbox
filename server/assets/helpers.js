@@ -82,6 +82,9 @@ function save() {
 
 	if(am_i_owner())
 		loc=window.location.href;
+	else {
+		data["parent"]=window.location.pathname;
+	}
 
 	$.post(loc,
 		JSON.stringify(data),
