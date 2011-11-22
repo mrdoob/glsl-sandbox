@@ -102,9 +102,9 @@ function convertBytesToHex( byteArray ) {
 }
 
 // dummy functions for saveButton
-function set_save_button(visibility) {
+function set_server_button(visibility) {
 }
 
-function add_save_button() {
+function add_save_buttons() {
 }
 

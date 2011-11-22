@@ -1,7 +1,8 @@
 
-var saveButton;
+var saveButton, forkButton;
 var effect_owner=false;
 var original_code='';
+var original_version='';
 
 function initialize_compressor(){
 	return null;
@@ -37,11 +38,20 @@ function load_url_code() {
 	}
 }
 
-function add_save_button() {
+function add_server_buttons() {
 	saveButton = document.createElement( 'button' );
 	saveButton.textContent = 'save';
 	saveButton.addEventListener( 'click', save, false );
 	toolbar.appendChild( saveButton );
+
+	parentButton = document.createElement( 'button' );
+	parentButton.textContent = 'parent';
+	parentButton.addEventListener( 'click', function() {
+		location.href = original_version;
+	}, false );
+	toolbar.appendChild( parentButton );
+
+	set_parent_button('visible');
 }
 
 function set_save_button(visibility) {
@@ -50,6 +60,14 @@ function set_save_button(visibility) {
 	else
 		saveButton.style.visibility = visibility;
 }
+
+function set_parent_button(visibility) {
+	if(original_version=='')
+		parentButton.style.visibility = 'hidden';
+	else
+		parentButton.style.visibility = visibility;
+}
+
 
 function get_img( width, height ) {
 	canvas.width = width;
@@ -97,6 +115,12 @@ function load_code(hash) {
 	$.getJSON('/item/'+hash, function(result) {
 		code.value=result['code'];
 		original_code=result['code'];
+
+		if(result['parent']) {
+			original_version=result['parent'];
+			set_parent_button('visible');
+		}
+
 		effect_owner=result['user'];
 
 		if(am_i_owner())

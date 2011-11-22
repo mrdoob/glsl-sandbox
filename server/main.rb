@@ -164,10 +164,17 @@ get %r{/item/(\d+)(/(\d+))?} do
         user=false
     end
 
+    parent=nil
+    if code['parent']
+        parent="/#{code['parent']}"
+        parent+="/#{code['parent_version']}" if code['parent_version']
+    end
+
     if item
-        {
+        data={
             :code => item['code'],
-            :user => user
+            :user => user,
+            :parent => parent
         }.to_json
     else
         {
@@ -192,9 +199,12 @@ post %r{^/(new)$} do
     }
 
     if code_data['parent']
-        m=code_data['parent'].match(%r{^/(\d+)(/.*)?})
+        m=code_data['parent'].match(%r{^/(\d+)(/(\d+))?})
         data[:parent] = m[1].to_i if m
+        data[:parent_version] = m[3].to_i if m[3]
     end
+
+    pp data
 
     CODE.insert(data)
 
