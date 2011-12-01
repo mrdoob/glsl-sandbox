@@ -313,6 +313,11 @@ void main( void ) {
 
 				if ( !gl.getProgramParameter( program, gl.LINK_STATUS ) ) {
 
+					var error = gl.getProgramInfoLog( program );
+
+					compileButton.title = error;
+					console.error( error );
+
 					console.error( 'VALIDATE_STATUS: ' + gl.getProgramParameter( program, gl.VALIDATE_STATUS ), 'ERROR: ' + gl.getError() );
 					compileButton.style.color = '#ff0000';
 					compileButton.textContent = 'compiled with errors';
