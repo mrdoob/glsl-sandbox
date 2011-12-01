@@ -32,7 +32,7 @@ function load_url_code() {
 
 	} else {
 
-		code.value = document.getElementById( 'example' ).text;
+		code.setValue(document.getElementById( 'example' ).text);
 		original_code = document.getElementById( 'example' ).text;
 
 	}
@@ -55,7 +55,7 @@ function add_server_buttons() {
 }
 
 function set_save_button(visibility) {
-	if(original_code==code.value)
+	if(original_code==code.getValue())
 		saveButton.style.visibility = 'hidden';
 	else
 		saveButton.style.visibility = visibility;
@@ -91,7 +91,7 @@ function save() {
 	img=get_img(200, 100);
 
 	data={
-		"code": document.getElementById( 'code' ).value,
+		"code": code.getValue(),
 		"image": img,
 		"user": get_user_id()
 	}
@@ -113,7 +113,7 @@ function save() {
 
 function load_code(hash) {
 	$.getJSON('/item/'+hash, function(result) {
-		code.value=result['code'];
+		code.setValue(result['code']);
 		original_code=result['code'];
 
 		if(result['parent']) {

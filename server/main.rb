@@ -134,6 +134,22 @@ get %r{^.*/js/helpers.js$} do
     send_file 'server/assets/helpers.js'
 end
 
+get %r{^.*/js/glsl.js$} do
+    send_file 'static/js/glsl.js'
+end
+
+get %r{^.*/js/codemirror.js$} do
+    send_file 'static/js/codemirror.js'
+end
+
+get %r{^.*/css/codemirror.css$} do
+    send_file 'static/css/codemirror.css'
+end
+
+get %r{^.*/css/default.css$} do
+    send_file 'static/css/default.css'
+end
+
 get %r{^.*/js/lzma.js$} do
     "\n"
 end
