@@ -279,8 +279,9 @@ void main( void ) {
 					lineNumbers: true,
 					matchBrackets: true,
 					mode: "text/x-glsl",
-					onChange: function() {
-						compile();
+					onChange: function () {
+						clearTimeout(compileTimer);
+						compileTimer = setTimeout(compile, 500);
 					}
 				});
 

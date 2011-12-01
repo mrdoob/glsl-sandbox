@@ -6,7 +6,7 @@
   padding: 12px;
   border: none;
   border-radius: 5px;
-  line-height: 1em;
+  line-height: 1.1em;
   font-family: monospace;
   font-size: 14px;
   font-weight: bold;
@@ -28,14 +28,14 @@
   position: absolute; left: 0; top: 0;
   z-index: 10;
 /*  background-color: #f7f7f7; */
-  border-right: 1px solid black;
+/*  border-right: 1px solid black; */
   min-width: 2em;
   height: 100%;
 }
 .CodeMirror-gutter-text {
   color: #aaa;
   text-align: right;
-  padding: .4em .2em .4em .4em;
+  padding: .4em .4em .4em .4em;
   white-space: pre !important;
 }
 .CodeMirror-lines {
