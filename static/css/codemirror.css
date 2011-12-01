@@ -10,6 +10,7 @@
   font-family: monospace;
   font-size: 14px;
   font-weight: bold;
+  visibility: visible;
 }
 
 .CodeMirror:hover {
