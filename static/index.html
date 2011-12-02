@@ -60,7 +60,7 @@
 		<script src="js/glsl.js"></script>
 
 		<script id="example" type="x-shader/x-fragment">#ifdef GL_ES
-precision highp float;
+precision mediump float;
 #endif
 
 uniform float time;
@@ -84,7 +84,7 @@ void main( void ) {
 		<script id="fragmentShader" type="x-shader/x-fragment">
 
 			#ifdef GL_ES
-			precision highp float;
+			precision mediump float;
 			#endif
 
 			uniform vec2 resolution;

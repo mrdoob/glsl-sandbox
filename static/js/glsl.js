@@ -158,7 +158,7 @@ CodeMirror.defineMode("glsl", function(config, parserConfig) {
   }
   var glslKeywords = "if break int case continue return default do " +
     "else struct switch float for unsigned goto while void const signed " +
-    "vec2 vec3 vec4 mat2 mat3 mat4 precision lowp midp highp uniform " +
+    "vec2 vec3 vec4 mat2 mat3 mat4 precision lowp mediump highp uniform " +
     "attribute varying gl_Vertex gl_FragCoord gl_FragColor sampler2D " +
     "samplerCube";
   var glslBuiltins = "radians degrees sin cos tan asin acos atan " +
