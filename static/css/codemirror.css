@@ -1,7 +1,7 @@
 .CodeMirror {
   color: white;
   text-shadow: rgba( 0, 0, 0, 1 ) 0px 1px 2px;
-  background-color:rgba(0,0,0,0);
+  background-color: transparent;
   position: absolute; left: 25px; top: 75px;
   padding: 12px;
   border: none;
@@ -11,15 +11,6 @@
   font-size: 14px;
   font-weight: bold;
   visibility: visible;
-  
-  -moz-transition-property: background-color; /* Firefox */
-  -webkit-transition-property: background-color; /* Safari and Chrome */
-  -o-transition-property: background-color; /* Opera */
-  transition-property: background-color;
-  -moz-transition-duration: .2s;
-  -webkit-transition-duration: .2s;
-  -o-transition-duration: .2s;
-  transition-duration: .2s;
 }
 
 .CodeMirror:hover {
