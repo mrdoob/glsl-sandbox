@@ -37,6 +37,7 @@
 			button:hover, select:hover {
 
 				opacity: 1;
+				box-shadow: 0 0 4px #FFF;
 
 			}
 
@@ -461,11 +462,24 @@ void main( void ) {
 
 
 			//
+			
+			function htmlEncode(str){
+
+				return String(str)
+					.replace(/&/g, '&amp;')
+					.replace(/"/g, '&quot;')
+					.replace(/'/g, '&#39;')
+					.replace(/</g, '&lt;')
+					.replace(/>/g, '&gt;');
+
+			}
+
+			//
 
 			function createShader( src, type ) {
 			
 				var shader = gl.createShader( type );
-				var line, index = 0, indexEnd;
+				var line, lineNum, lineError, index = 0, indexEnd;
 
 				while (errorLines.length > 0) {
 					line = errorLines.pop();
@@ -501,7 +515,11 @@ void main( void ) {
 						index += 9;
 						indexEnd = error.indexOf(':', index);
 						if (indexEnd > index) {
-							line = code.setMarker(parseInt(error.substring(index, indexEnd)) - 1, null, "errorMarker");
+							lineNum = parseInt(error.substring(index, indexEnd));
+							index = indexEnd + 1;
+							indexEnd = error.indexOf("ERROR: 0:", index);
+							lineError = htmlEncode((indexEnd > index) ? error.substring(index, indexEnd) : error.substring(index));
+							line = code.setMarker(lineNum - 1, '<abbr title="' + lineError + '">' + lineNum + '</abbr>', "errorMarker");
 							code.setLineClass(line, "errorLine");
 							errorLines.push(line);
 						}
