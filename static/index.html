@@ -476,7 +476,7 @@ void main( void ) {
 					var error = gl.getShaderInfoLog( shader );
 					
 					// Remove trailing linefeed, for FireFox's benefit.
-					while ((error.length > 1) && (error[error.length - 1] < 32)) {
+					while ((error.length > 1) && (error.charCodeAt(error.length - 1) < 32)) {
 						error = error.substring(0, error.length - 1);
 					}
 
