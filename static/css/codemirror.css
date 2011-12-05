@@ -89,3 +89,13 @@ span.CodeMirror-selected {
 
 .CodeMirror-matchingbracket {color: #0f0 !important;}
 .CodeMirror-nonmatchingbracket {color: #f22 !important;}
+
+.CodeMirror pre.errorMarker {
+  color: #f00;
+  font-weight: bold;
+  background: rgba(200, 100, 0, 0.5);
+  border-radius: 3px;
+}
+.CodeMirror:hover pre.errorLine {
+  background: rgba(200, 50, 0, 0.2);
+}

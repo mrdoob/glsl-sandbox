@@ -3,6 +3,7 @@
 	<head>
 		<title>GLSL Sandbox</title>
 		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1">
 		<style>
 
 			body {
@@ -36,6 +37,7 @@
 			button:hover, select:hover {
 
 				opacity: 1;
+				box-shadow: 0 0 4px #FFF;
 
 			}
 
@@ -138,7 +140,7 @@ void main( void ) {
 			// Greetings to Iq/RGBA! ;)
 
 			var quality = 2, quality_levels = [ 0.5, 1, 2, 4, 8 ];
-			var toolbar, compileButton, fullscreenButton, compileTimer;
+			var toolbar, compileButton, fullscreenButton, compileTimer, errorLines = [];
 			var code, canvas, gl, buffer, currentProgram, vertexPosition,
 			parameters = { startTime: Date.now(), time: 0, mouseX: 0.5, mouseY: 0.5, screenWidth: 0, screenHeight: 0 },
 			frontTarget, backTarget, screenProgram;
@@ -460,10 +462,30 @@ void main( void ) {
 
 
 			//
+			
+			function htmlEncode(str){
+
+				return String(str)
+					.replace(/&/g, '&amp;')
+					.replace(/"/g, '&quot;')
+					.replace(/'/g, '&#39;')
+					.replace(/</g, '&lt;')
+					.replace(/>/g, '&gt;');
+
+			}
+
+			//
 
 			function createShader( src, type ) {
-
+			
 				var shader = gl.createShader( type );
+				var line, lineNum, lineError, index = 0, indexEnd;
+
+				while (errorLines.length > 0) {
+					line = errorLines.pop();
+					code.setLineClass(line, null);
+					code.clearMarker(line);
+				}
 
 				gl.shaderSource( shader, src );
 				gl.compileShader( shader );
@@ -473,6 +495,11 @@ void main( void ) {
 				if ( !gl.getShaderParameter( shader, gl.COMPILE_STATUS ) ) {
 
 					var error = gl.getShaderInfoLog( shader );
+					
+					// Remove trailing linefeed, for FireFox's benefit.
+					while ((error.length > 1) && (error.charCodeAt(error.length - 1) < 32)) {
+						error = error.substring(0, error.length - 1);
+					}
 
 					compileButton.title = error;
 					console.error( error );
@@ -481,6 +508,22 @@ void main( void ) {
 					compileButton.textContent = 'compiled with errors';
 
 					set_save_button('hidden');
+
+					while (index >= 0) {
+						index = error.indexOf("ERROR: 0:", index);
+						if (index < 0) { break; }
+						index += 9;
+						indexEnd = error.indexOf(':', index);
+						if (indexEnd > index) {
+							lineNum = parseInt(error.substring(index, indexEnd));
+							index = indexEnd + 1;
+							indexEnd = error.indexOf("ERROR: 0:", index);
+							lineError = htmlEncode((indexEnd > index) ? error.substring(index, indexEnd) : error.substring(index));
+							line = code.setMarker(lineNum - 1, '<abbr title="' + lineError + '">' + lineNum + '</abbr>', "errorMarker");
+							code.setLineClass(line, "errorLine");
+							errorLines.push(line);
+						}
+					}
 
 					return null;
 
