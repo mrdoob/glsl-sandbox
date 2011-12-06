@@ -156,11 +156,11 @@ CodeMirror.defineMode("glsl", function(config, parserConfig) {
     for (var i = 0; i < words.length; ++i) obj[words[i]] = true;
     return obj;
   }
-  var glslKeywords = "if break int case continue return default do " +
-    "else struct switch float for unsigned goto while void const signed " +
-    "vec2 vec3 vec4 mat2 mat3 mat4 precision lowp mediump highp uniform " +
-    "attribute varying gl_Vertex gl_FragCoord gl_FragColor sampler2D " +
-    "samplerCube";
+  var glslKeywords = "attribute const uniform varying break continue " +
+    "do for while if else in out inout float int void bool true false " +
+    "lowp mediump highp precision invariant discard return mat2 mat3 " +
+    "mat4 vec2 vec3 vec4 ivec2 ivec3 ivec4 bvec2 bvec3 bvec4 sampler2D " +
+    "samplerCube struct";
   var glslBuiltins = "radians degrees sin cos tan asin acos atan " +
     "pow exp log exp2 log2 sqrt inversesqrt abs sign foor trunc " +
     "round ceil fract mod min max clamp mix step smoothstep length " +
