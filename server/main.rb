@@ -37,17 +37,6 @@ get '/e' do
     send_file 'static/index.html'
 end
 
-=begin
-get '/new' do
-    send_file 'static/index.html'
-end
-
-
-get %r{^/(\d+)(/(\d+))?$} do
-    send_file 'static/index.html'
-end
-=end
-
 get %r{/item/(\d+)([/.](\d+))?} do
     code_id=params[:captures][0].to_i
     if params[:captures][1]
@@ -64,6 +53,18 @@ post '/e' do
     $glsl.save_effect(body)
 end
 
+
+# redirects
+
+get '/new' do
+    redirect '/e', 301
+end
+
+get %r{^/(\d+)(/(\d+))?$} do
+    url="/e##{params[:captures][0]}"
+    url+=".#{params[:captures][2]}" if params[:captures][1]
+    redirect url, 301
+end
 
 
 
