@@ -5,6 +5,10 @@ require 'mongo'
 require 'json'
 require 'erb'
 
+$: << './server'
+
+require 'model'
+
 require 'pp'
 
 configure do
@@ -12,89 +16,9 @@ configure do
 
     GALLERY=ERB.new(File.read('server/assets/gallery.html'))
 
-    uri = URI.parse(ENV['MONGOHQ_URL'])
-    conn = Mongo::Connection.from_uri(ENV['MONGOHQ_URL'])
-    db = conn.db(uri.path.gsub(/^\//, ''))
-    VERSIONS=db.collection('versions')
-    CODE=db.collection('code')
-    COUNTERS=db.collection('counters')
-
-    # initialize counters
-    code=COUNTERS.find_one({:_id => 'code'})
-    if !code
-        COUNTERS.insert({
-            :_id => 'code',
-            :counter => 0
-        })
-    end
+    $glsl=GlslDatabase.new
 
     EFFECTS_PER_PAGE=50
-end
-
-class Effects
-    def initialize(effects, extra={})
-        @effects=effects
-        @extra={
-            :page => 0,
-            :count => 0,
-            :effects_per_page => EFFECTS_PER_PAGE
-        }.merge(extra)
-    end
-
-    def bind
-        binding
-    end
-
-    def effects
-        @effects
-    end
-
-    def extra
-        @extra
-    end
-
-    def previous_page
-        if @extra[:page]>0
-            @extra[:page]-1
-        end
-    end
-
-    def next_page
-        if @extra[:count]>=((@extra[:page]+1)*@extra[:effects_per_page])
-            @extra[:page]+1
-        end
-    end
-end
-
-
-def increment_code_counter
-    counter=COUNTERS.find_and_modify({
-        :query => {:_id => 'code'},
-        :update => {'$inc' => {:counter => 1}}
-    })
-
-    counter['counter']
-end
-
-def save_version(code_id, code)
-    time=Time.now
-    code_data=JSON.parse(code)
-
-    data={
-        :created_at => time,
-        :code => code_data['code']
-    }
-
-    CODE.find_and_modify({
-        :query => { :_id => code_id },
-        :update => {
-            '$set' => {
-                :modified_at => time,
-                :image => code_data['image']
-            },
-            '$push' => { :versions => data }
-        }
-    })
 end
 
 get '/' do
@@ -104,18 +28,7 @@ get '/' do
         page=0
     end
 
-    count=CODE.count();
-
-    effects=CODE.find({}, {
-        :sort => [:modified_at, 'descending'],
-        :limit => EFFECTS_PER_PAGE,
-        :skip => page*EFFECTS_PER_PAGE
-    })
-
-    ef=Effects.new(effects,
-        :page   => page,
-        :count  => count
-    )
+    ef=$glsl.get_page(page, EFFECTS_PER_PAGE)
 
     GALLERY.result(ef.bind)
 end
@@ -166,67 +79,13 @@ get %r{/item/(\d+)(/(\d+))?} do
         version_id=nil
     end
 
-    code=CODE.find_one({:_id => code_id})
-
-    if version_id
-        item=code['versions'][version_id]
-    else
-        item=code['versions'].last
-    end
-
-    if code['user']
-        user=code['user']
-    else
-        user=false
-    end
-
-    parent=nil
-    if code['parent']
-        parent="/#{code['parent']}"
-        parent+="/#{code['parent_version']}" if code['parent_version']
-    end
-
-    if item
-        data={
-            :code => item['code'],
-            :user => user,
-            :parent => parent
-        }.to_json
-    else
-        {
-            :code => '// item not found',
-            :user => false
-        }.to_json
-    end
+    $glsl.get_code_json(code_id, version_id)
 end
 
 post %r{^/(new)$} do
-    counter=increment_code_counter
     body=request.body.read
 
-    code_data=JSON.parse(body)
-
-    data={
-        :_id => counter,
-        :created_at => Time.now,
-        :modified_at => Time.now,
-        :versions => [],
-        :user => code_data['user']
-    }
-
-    if code_data['parent']
-        m=code_data['parent'].match(%r{^/(\d+)(/(\d+))?})
-        data[:parent] = m[1].to_i if m
-        data[:parent_version] = m[3].to_i if m[3]
-    end
-
-    pp data
-
-    CODE.insert(data)
-
-    save_version(counter, body)
-
-    "#{counter}/0"
+    $glsl.save_new_effect(body)
 end
 
 
@@ -234,9 +93,9 @@ post  %r{^/(\d+)(/(\d+))?$} do
     code_id=params[:captures][0].to_i
     body=request.body.read
 
-    save_version(code_id, body)
+    $glsl.save_version(code_id, body)
 
-    code=CODE.find_one({ :_id => code_id })
+    code=$glsl.get_code(code_id)
 
     version=code['versions'].length-1
 
