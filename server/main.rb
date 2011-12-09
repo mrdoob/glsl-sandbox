@@ -33,15 +33,17 @@ get '/' do
     GALLERY.result(ef.bind)
 end
 
-# assets
+get '/e' do
+    send_file 'static/index.html'
+end
 
+# assets
+=begin
 get '/new' do
     send_file 'static/index.html'
 end
 
-get '/e' do
-    send_file 'static/index.html'
-end
+
 
 get %r{^.*/js/jquery.js$} do
     send_file 'server/assets/jquery.js'
@@ -74,6 +76,7 @@ end
 get %r{^/(\d+)(/(\d+))?$} do
     send_file 'static/index.html'
 end
+=end
 
 get %r{/item/(\d+)([/.](\d+))?} do
     code_id=params[:captures][0].to_i
