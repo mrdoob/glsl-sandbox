@@ -12,7 +12,7 @@ require 'model'
 require 'pp'
 
 configure do
-    set :public_folder, 'public'
+    set :public_folder, 'server/assets'
 
     GALLERY=ERB.new(File.read('server/assets/gallery.html'))
 
@@ -36,6 +36,10 @@ end
 # assets
 
 get '/new' do
+    send_file 'static/index.html'
+end
+
+get '/e' do
     send_file 'static/index.html'
 end
 
@@ -71,7 +75,7 @@ get %r{^/(\d+)(/(\d+))?$} do
     send_file 'static/index.html'
 end
 
-get %r{/item/(\d+)(/(\d+))?} do
+get %r{/item/(\d+)([/.](\d+))?} do
     code_id=params[:captures][0].to_i
     if params[:captures][1]
         version_id=params[:captures][2].to_i
@@ -101,6 +105,12 @@ post  %r{^/(\d+)(/(\d+))?$} do
 
     "#{code_id}/#{version}"
 end
+
+post '/e' do
+    body=request.body.read
+    $glsl.save_effect(body)
+end
+
 
 
 

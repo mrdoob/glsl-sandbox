@@ -26,9 +26,9 @@ function am_i_owner() {
 }
 
 function load_url_code() {
-	if ( window.location.pathname!='/' && window.location.pathname!='/new') {
+	if ( window.location.hash!='') {
 
-		load_code(window.location.pathname.substr(1));
+		load_code(window.location.hash.substr(1));
 
 	} else {
 
@@ -48,6 +48,7 @@ function add_server_buttons() {
 	parentButton.textContent = 'parent';
 	parentButton.addEventListener( 'click', function() {
 		location.href = original_version;
+		load_url_code();
 	}, false );
 	toolbar.appendChild( parentButton );
 
@@ -96,10 +97,10 @@ function save() {
 		"user": get_user_id()
 	}
 
-	loc='/new';
+	loc='/e';
 
 	if(am_i_owner())
-		loc=window.location.href;
+		data["code_id"]=window.location.hash.substr(1);
 	else {
 		data["parent"]=window.location.pathname;
 	}
@@ -107,7 +108,7 @@ function save() {
 	$.post(loc,
 		JSON.stringify(data),
 		function(result) {
-			window.location.replace('/'+result);
+			window.location.replace('/e#'+result);
 		}, "text");
 }
 

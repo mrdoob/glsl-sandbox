@@ -68,6 +68,27 @@ class GlslDatabase
                 '$push' => { :versions => data }
             }
         })
+
+        code=$glsl.get_code(code_id)
+
+        version=code['versions'].length-1
+
+        "#{code_id}.#{version}"
+    end
+
+    def save_effect(code)
+        code_data=JSON.parse(code)
+
+        if code_data['code_id'] && !code_data['code_id'].empty?
+            m=code_data['code_id'].match(/^(\d+)(\.\d+)?/)
+            if m
+                save_version(m[1].to_i, code)
+            else
+                save_new_effect(code)
+            end
+        else
+            save_new_effect(code)
+        end
     end
 
     def save_new_effect(code)
@@ -89,13 +110,9 @@ class GlslDatabase
             data[:parent_version] = m[3].to_i if m[3]
         end
 
-        pp data
-
         @code.insert(data)
 
         save_version(counter, code)
-
-        "#{counter}/0"
     end
 
     def get_page(page=0, effects_per_page=50)
@@ -137,8 +154,8 @@ class GlslDatabase
 
             parent=nil
             if code['parent']
-                parent="/#{code['parent']}"
-                parent+="/#{code['parent_version']}" if code['parent_version']
+                parent="/e##{code['parent']}"
+                parent+=".#{code['parent_version']}" if code['parent_version']
             end
         else
             item=nil
