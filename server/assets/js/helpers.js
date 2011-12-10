@@ -1,5 +1,5 @@
 
-var saveButton, forkButton;
+var saveButton, forkButton, parentButton;
 var effect_owner=false;
 var original_code='';
 var original_version='';
@@ -44,8 +44,9 @@ function add_server_buttons() {
 	saveButton.addEventListener( 'click', save, false );
 	toolbar.appendChild( saveButton );
 
-	parentButton = document.createElement( 'button' );
+	parentButton = document.createElement( 'a' );
 	parentButton.textContent = 'parent';
+	parentButton.href = original_version;
 	parentButton.addEventListener( 'click', function() {
 		location.href = original_version;
 		load_url_code();
@@ -120,9 +121,11 @@ function load_code(hash) {
 
 		if(result['parent']) {
 			original_version=result['parent'];
+			parentButton.href = original_version;
 			set_parent_button('visible');
 		} else {
 			original_version='';
+			parentButton.href = '/';
 			set_parent_button('hidden');
 		}
 

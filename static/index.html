@@ -14,7 +14,7 @@
 
 			}
 
-			button, select {
+			button, select, a, a:visited {
 
 				padding: 8px 12px 8px 12px;
 
@@ -31,10 +31,11 @@
 				font-weight: bold;
 
 				cursor: pointer;
+				text-decoration: none;
 
 			}
 
-			button:hover, select:hover {
+			button:hover, select:hover, a:hover {
 
 				opacity: 1;
 				box-shadow: 0 0 4px #FFF;
@@ -168,8 +169,7 @@ void main( void ) {
 				document.body.appendChild( toolbar );
 
 				var rightside = document.createElement( 'div' );
-				rightside.style.position = 'absolute';
-				rightside.style.right = '0px';
+				rightside.style.cssFloat = 'right';
 				toolbar.appendChild( rightside );
 
 				fullscreenButton = document.createElement( 'button' );
@@ -182,13 +182,9 @@ void main( void ) {
 
 				rightside.appendChild( fullscreenButton );
 
-				var button = document.createElement( 'button' );
+				var button = document.createElement( 'a' );
 				button.textContent = 'gallery';
-				button.addEventListener( 'click', function ( event ) {
-
-					location.href = 'http://glsl.heroku.com/';
-
-				}, false );
+				button.href = 'http://glsl.heroku.com/';
 				rightside.appendChild( button );
 
 				var button = document.createElement( 'button' );
@@ -199,17 +195,17 @@ void main( void ) {
 
 						button.textContent = 'show code';
 						code.getWrapperElement().style.visibility = 'hidden';
-						select.style.visibility = 'hidden';
 						compileButton.style.visibility = 'hidden';
 						set_save_button('hidden');
+						set_parent_button('hidden');
 
 					} else {
 
 						button.textContent = 'hide code';
 						code.getWrapperElement().style.visibility = 'visible';
-						select.style.visibility = 'visible';
 						compileButton.style.visibility = 'visible';
 						set_save_button('visible');
+						set_parent_button('visible');
 
 					}
 

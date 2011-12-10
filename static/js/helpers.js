@@ -105,6 +105,9 @@ function convertBytesToHex( byteArray ) {
 function set_save_button(visibility) {
 }
 
+function set_parent_button(visibility) {
+}
+
 function add_server_buttons() {
 }
 
