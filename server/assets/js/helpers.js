@@ -9,7 +9,7 @@ function initialize_compressor(){
 }
 
 function initialize_helper() {
-	window.onhashchange = function() { load_url_code(); }
+	window.onhashchange = function() { load_url_code(); };
 
 	if ( !localStorage.getItem('glslsandbox_user') )
 		localStorage.setItem('glslsandbox_user', generate_user_id());
