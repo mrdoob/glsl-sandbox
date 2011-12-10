@@ -102,13 +102,14 @@ function save() {
 	if(am_i_owner())
 		data["code_id"]=window.location.hash.substr(1);
 	else {
-		data["parent"]=window.location.pathname;
+		data["parent"]=window.location.hash.substr(1);
 	}
 
 	$.post(loc,
 		JSON.stringify(data),
 		function(result) {
 			window.location.replace('/e#'+result);
+			load_url_code();
 		}, "text");
 }
 
