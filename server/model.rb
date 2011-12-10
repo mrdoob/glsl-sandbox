@@ -105,9 +105,9 @@ class GlslDatabase
         }
 
         if code_data['parent']
-            m=code_data['parent'].match(%r{^/(\d+)(/(\d+))?})
+            m=code_data['parent'].match(%r{^(\d+)(\.(\d+))?})
             data[:parent] = m[1].to_i if m
-            data[:parent_version] = m[3].to_i if m[3]
+            data[:parent_version] = m[3].to_i if m && m[3]
         end
 
         @code.insert(data)

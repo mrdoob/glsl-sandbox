@@ -103,13 +103,14 @@ function save() {
 	if(am_i_owner())
 		data["code_id"]=window.location.hash.substr(1);
 	else {
-		data["parent"]=window.location.pathname;
+		data["parent"]=window.location.hash.substr(1);
 	}
 
 	$.post(loc,
 		JSON.stringify(data),
 		function(result) {
 			window.location.replace('/e#'+result);
+			load_url_code();
 		}, "text");
 }
 
@@ -122,6 +123,9 @@ function load_code(hash) {
 			original_version=result['parent'];
 			parentButton.href = original_version;
 			set_parent_button('visible');
+		} else {
+			original_version='';
+			set_parent_button('hidden');
 		}
 
 		effect_owner=result['user'];
