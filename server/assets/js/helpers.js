@@ -9,6 +9,8 @@ function initialize_compressor(){
 }
 
 function initialize_helper() {
+	window.onhashchange = function() { load_url_code(); };
+
 	if ( !localStorage.getItem('glslsandbox_user') )
 		localStorage.setItem('glslsandbox_user', generate_user_id());
 }
@@ -47,10 +49,6 @@ function add_server_buttons() {
 	parentButton = document.createElement( 'a' );
 	parentButton.textContent = 'parent';
 	parentButton.href = original_version;
-	parentButton.addEventListener( 'click', function() {
-		location.href = original_version;
-		load_url_code();
-	}, false );
 	toolbar.appendChild( parentButton );
 
 	set_parent_button('visible');
