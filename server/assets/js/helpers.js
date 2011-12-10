@@ -125,6 +125,7 @@ function load_code(hash) {
 			set_parent_button('visible');
 		} else {
 			original_version='';
+			parentButton.href = '/';
 			set_parent_button('hidden');
 		}
 
