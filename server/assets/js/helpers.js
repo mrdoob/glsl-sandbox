@@ -121,6 +121,9 @@ function load_code(hash) {
 		if(result['parent']) {
 			original_version=result['parent'];
 			set_parent_button('visible');
+		} else {
+			original_version='';
+			set_parent_button('hidden');
 		}
 
 		effect_owner=result['user'];
