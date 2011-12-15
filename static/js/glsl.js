@@ -166,7 +166,7 @@ CodeMirror.defineMode("glsl", function(config, parserConfig) {
     "min max clamp mix step smoothstep length distance dot cross " +
     "normalize faceforward reflect refract matrixCompMult lessThan " +
     "lessThanEqual greaterThan greaterThanEqual equal notEqual any all " +
-    "not dFdx dFdy fwidth texture2D texture2DProj texture2DLod
+    "not dFdx dFdy fwidth texture2D texture2DProj texture2DLod " +
     "texture2DProjLod textureCube textureCubeLod";
 
   function cppHook(stream, state) {
