@@ -115,7 +115,7 @@ function save() {
 function load_code(hash) {
 	$.getJSON('/item/'+hash, function(result) {
 		code.setValue(result['code']);
-		original_code=result['code'];
+		original_code=code.getValue();
 
 		if(result['parent']) {
 			original_version=result['parent'];
