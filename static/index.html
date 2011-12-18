@@ -144,10 +144,10 @@ void main( void ) {
 			var toolbar, compileButton, fullscreenButton, compileTimer, errorLines = [];
 			var code, canvas, gl, buffer, currentProgram, vertexPosition,
 			parameters = { startTime: Date.now(), time: 0, mouseX: 0.5, mouseY: 0.5, screenWidth: 0, screenHeight: 0 },
-			frontTarget, backTarget, screenProgram;
+			frontTarget, backTarget, screenProgram, getWebGL;
 
 			init();
-			animate();
+			if (gl) { animate(); }
 
 			function init() {
 
@@ -254,23 +254,24 @@ void main( void ) {
 
 				if ( !gl ) {
 
-					alert("WebGL not supported");
-					throw "cannot create webgl context";
+					alert("WebGL not supported, but code will be shown.");
 
+				} else {
+
+					// Create vertex buffer (2 triangles)
+
+					buffer = gl.createBuffer();
+					gl.bindBuffer( gl.ARRAY_BUFFER, buffer );
+					gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( [ - 1.0, - 1.0, 1.0, - 1.0, - 1.0, 1.0, 1.0, - 1.0, 1.0, 1.0, - 1.0, 1.0 ] ), gl.STATIC_DRAW );
+
+					document.addEventListener( 'mousemove', function ( event ) {
+
+						parameters.mouseX = event.clientX / window.innerWidth;
+						parameters.mouseY = 1 - event.clientY / window.innerHeight;
+
+					}, false );
+					
 				}
-
-				// Create vertex buffer (2 triangles)
-
-				buffer = gl.createBuffer();
-				gl.bindBuffer( gl.ARRAY_BUFFER, buffer );
-				gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( [ - 1.0, - 1.0, 1.0, - 1.0, - 1.0, 1.0, 1.0, - 1.0, 1.0, 1.0, - 1.0, 1.0 ] ), gl.STATIC_DRAW );
-
-				document.addEventListener( 'mousemove', function ( event ) {
-
-					parameters.mouseX = event.clientX / window.innerWidth;
-					parameters.mouseY = 1 - event.clientY / window.innerHeight;
-
-				}, false );
 
 				// initialize code editor
 				code = CodeMirror(document.body, {
@@ -293,6 +294,26 @@ void main( void ) {
 			}
 
 			function compile() {
+			
+				if (!gl) {
+				
+					if (!getWebGL) {
+					
+						getWebGL = true;
+						compileButton.addEventListener( 'click', function ( event ) {
+
+							document.location = 'http://get.webgl.org/';
+
+						}, false );
+						compileButton.title = 'http://get.webgl.org/';
+						compileButton.style.color = '#ff0000';
+						compileButton.textContent = 'WebGL not supported!';
+						set_save_button('hidden');
+						
+					}
+					return;
+					
+				}
 
 				var program = gl.createProgram();
 				var fragment = code.getValue();
@@ -361,6 +382,8 @@ void main( void ) {
 			}
 
 			function compileScreenProgram() {
+			
+				if (!gl) { return; }
 
 				var program = gl.createProgram();
 				var fragment = document.getElementById( 'fragmentShader' ).textContent;
@@ -549,10 +572,13 @@ void main( void ) {
 				parameters.screenWidth = canvas.width;
 				parameters.screenHeight = canvas.height;
 
-				gl.viewport( 0, 0, canvas.width, canvas.height );
+				if (gl) {
+				
+					gl.viewport( 0, 0, canvas.width, canvas.height );
 
-				createRenderTargets();
-
+					createRenderTargets();
+					
+				}
 			}
 
 			//
