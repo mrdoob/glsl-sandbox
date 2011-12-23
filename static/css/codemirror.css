@@ -99,3 +99,15 @@ span.CodeMirror-selected {
 .CodeMirror:hover pre.errorLine {
   background: rgba(200, 50, 0, 0.2);
 }
+
+.CodeMirror .resizer {
+	display: block;
+	position: absolute;
+	bottom: 3px;
+	right: 3px;
+	width: 11px;
+	height: 11px;
+	background-image: url('resizer.png');
+	background-repeat: no-repeat;
+	cursor: se-resize;
+}

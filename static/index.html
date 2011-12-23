@@ -144,7 +144,7 @@ void main( void ) {
 			var toolbar, compileButton, fullscreenButton, compileTimer, errorLines = [];
 			var code, canvas, gl, buffer, currentProgram, vertexPosition,
 			parameters = { startTime: Date.now(), time: 0, mouseX: 0.5, mouseY: 0.5, screenWidth: 0, screenHeight: 0 },
-			frontTarget, backTarget, screenProgram, getWebGL;
+			frontTarget, backTarget, screenProgram, getWebGL, resizer = {};
 
 			init();
 			if (gl) { animate(); }
@@ -277,6 +277,9 @@ void main( void ) {
 				code = CodeMirror(document.body, {
 					lineNumbers: true,
 					matchBrackets: true,
+					indentWithTabs: true,
+					tabSize: 8,
+					indentUnit: 8,
 					mode: "text/x-glsl",
 					onChange: function () {
 						clearTimeout(compileTimer);
@@ -284,6 +287,47 @@ void main( void ) {
 					}
 				});
 				code.getWrapperElement().style.visibility = 'visible';
+
+				resizer.offsetMouseX = 0;
+				resizer.offsetMouseY = 0;
+				resizer.isResizing = false;
+				resizer.currentWidth = 100;
+				resizer.currentHeight = 100;
+				resizer.minWidth = 100;
+				resizer.minHeight = 100;
+				resizer.maxWidth = 100;
+				resizer.maxHeight = 100;
+				resizer.element = document.createElement( 'div' );
+				resizer.element.className = 'resizer';
+				code.getWrapperElement().appendChild(resizer.element);
+
+				resizer.element.addEventListener( 'mousedown', function ( event ) {
+					if (event.button !== 2) {
+						resizer.offsetMouseX = event.clientX - resizer.currentWidth;
+						resizer.offsetMouseY = event.clientY - resizer.currentHeight;
+						resizer.isResizing = true;
+						event.preventDefault();
+					}
+				}, false );
+				
+				document.addEventListener( 'mousemove', function ( event ) {
+					var codeElement;
+					if (resizer.isResizing) {
+						resizer.currentWidth = Math.max(Math.min(event.clientX - resizer.offsetMouseX, resizer.maxWidth), resizer.minWidth);
+						resizer.currentHeight = Math.max(Math.min(event.clientY - resizer.offsetMouseY, resizer.maxHeight), resizer.minWidth);
+						codeElement = code.getWrapperElement();
+						codeElement.style.width = resizer.currentWidth + 'px';
+						codeElement.style.height = resizer.currentHeight + 'px';
+					}
+				}, false );
+
+				document.addEventListener( 'mouseup', function ( event ) {
+					resizer.isResizing = false;
+				}, false );
+				
+				document.addEventListener( 'mouseleave', function ( event ) {
+					resizer.isResizing = false;
+				}, false );
 
 				onWindowResize();
 				window.addEventListener( 'resize', onWindowResize, false );
@@ -556,12 +600,27 @@ void main( void ) {
 
 			function onWindowResize( event ) {
 
+				var isMaxWidth = ((resizer.currentWidth === resizer.maxWidth) || (resizer.currentWidth === resizer.minWidth)),
+					isMaxHeight = ((resizer.currentHeight === resizer.maxHeight) || (resizer.currentHeight === resizer.minHeight));
+
 				toolbar.style.width = window.innerWidth - 47 + 'px';
+
+				resizer.isResizing = false;
+				resizer.maxWidth = window.innerWidth - 75;
+				resizer.maxHeight = window.innerHeight - 125;
+				if (isMaxWidth || (resizer.currentWidth > resizer.maxWidth)) {
+					resizer.currentWidth = resizer.maxWidth;
+				}
+				if (isMaxHeight || (resizer.currentHeight > resizer.maxHeight)) {
+					resizer.currentHeight = resizer.maxHeight;
+				}
+				if (resizer.currentWidth < resizer.minWidth) { resizer.currentWidth = resizer.minWidth; }
+				if (resizer.currentHeight < resizer.minHeight) { resizer.currentHeight = resizer.minHeight; }
 
 				code.getWrapperElement().style.top = '75px';
 				code.getWrapperElement().style.left = '25px';
-				code.getWrapperElement().style.width = ( window.innerWidth - 75 ) + 'px';
-				code.getWrapperElement().style.height = ( window.innerHeight - 125 ) + 'px';
+				code.getWrapperElement().style.width = resizer.currentWidth + 'px';
+				code.getWrapperElement().style.height = resizer.currentHeight + 'px';
 
 				canvas.width = window.innerWidth / quality;
 				canvas.height = window.innerHeight / quality;
