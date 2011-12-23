@@ -42,11 +42,13 @@ function load_url_code() {
 
 function add_server_buttons() {
 	saveButton = document.createElement( 'button' );
+	saveButton.style.visibility = 'hidden';
 	saveButton.textContent = 'save';
 	saveButton.addEventListener( 'click', save, false );
 	toolbar.appendChild( saveButton );
 
 	parentButton = document.createElement( 'a' );
+	parentButton.style.visibility = 'hidden';
 	parentButton.textContent = 'parent';
 	parentButton.href = original_version;
 	toolbar.appendChild( parentButton );
@@ -113,6 +115,14 @@ function save() {
 }
 
 function load_code(hash) {
+	if (gl) {
+		compileButton.title = '';
+		compileButton.style.color = '#ffff00';
+		compileButton.textContent = 'Loading...';
+	}
+	set_save_button('hidden');
+	set_parent_button('hidden');
+
 	$.getJSON('/item/'+hash, function(result) {
 		code.setValue(result['code']);
 		original_code=code.getValue();
