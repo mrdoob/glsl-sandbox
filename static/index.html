@@ -144,7 +144,7 @@ void main( void ) {
 			var toolbar, compileButton, fullscreenButton, compileTimer, errorLines = [];
 			var code, canvas, gl, buffer, currentProgram, vertexPosition,
 			parameters = { startTime: Date.now(), time: 0, mouseX: 0.5, mouseY: 0.5, screenWidth: 0, screenHeight: 0 },
-			frontTarget, backTarget, screenProgram, getWebGL, resizer = {};
+			frontTarget, backTarget, screenProgram, getWebGL, resizer = {}, compileOnChangeCode = true;
 
 			init();
 			if (gl) { animate(); }
@@ -283,8 +283,10 @@ void main( void ) {
 					indentUnit: 8,
 					mode: "text/x-glsl",
 					onChange: function () {
-						clearTimeout(compileTimer);
-						compileTimer = setTimeout(compile, 500);
+						if (compileOnChangeCode) {
+							clearTimeout(compileTimer);
+							compileTimer = setTimeout(compile, 500);
+						}
 					}
 				});
 				code.getWrapperElement().style.visibility = 'visible';

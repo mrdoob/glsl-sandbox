@@ -52,8 +52,10 @@ function readURL( hash ) {
 
 	compressor.decompress( bytes, function( text ) {
 
+		compileOnChangeCode = false;  // Prevent compile timer start
 		code.setValue(text);
 		compile();
+		compileOnChangeCode = true;
 
 	},
 	dummyFunction );

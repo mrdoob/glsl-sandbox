@@ -124,6 +124,7 @@ function load_code(hash) {
 	set_parent_button('hidden');
 
 	$.getJSON('/item/'+hash, function(result) {
+		compileOnChangeCode = false;  // Prevent compile timer start
 		code.setValue(result['code']);
 		original_code=code.getValue();
 
@@ -145,6 +146,7 @@ function load_code(hash) {
 			saveButton.textContent = 'fork';
 
 		compile();
+		compileOnChangeCode = true;
 	});
 }
 
