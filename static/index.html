@@ -321,6 +321,7 @@ void main( void ) {
 						codeElement = code.getWrapperElement();
 						codeElement.style.width = resizer.currentWidth + 'px';
 						codeElement.style.height = resizer.currentHeight + 'px';
+						code.refresh();
 					}
 				}, false );
 
