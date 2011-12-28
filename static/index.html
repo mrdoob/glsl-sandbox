@@ -159,6 +159,10 @@ void main( void ) {
 
 			function init() {
 
+				if (!document.addEventListener) {
+					document.location = 'http://get.webgl.org/';
+				}
+
 				var effect = document.createElement( 'div' );
 				document.body.appendChild( effect );
 
