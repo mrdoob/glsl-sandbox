@@ -18,7 +18,6 @@ function initialize_helper() {
 	} else {
 		// This fallback shouldn't be used by any browsers that are able to commit code.
 		localStorage = { getItem: function(x) { return 'invalid_user'; } };
-		console.warn('localStorage not available!');
 	}
 }
 
