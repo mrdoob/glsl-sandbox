@@ -125,17 +125,25 @@ void main( void ) {
 				window.requestAnimationFrame = ( function() {
 
 					return window.webkitRequestAnimationFrame ||
-					window.mozRequestAnimationFrame ||
-					window.oRequestAnimationFrame ||
-					window.msRequestAnimationFrame ||
-					function ( callback, element ) {
+						window.mozRequestAnimationFrame ||
+						window.oRequestAnimationFrame ||
+						window.msRequestAnimationFrame ||
+						function ( callback, element ) {
 
-						window.setTimeout( callback, 1000 / 60 );
+							window.setTimeout( callback, 1000 / 60 );
 
-					};
+						};
 
 				} )();
 
+			}
+
+			// Get older browsers safely through init code, so users can read the
+			// message about how to download newer browsers.
+			if (!Date.now) {
+				Date.now = function() {
+					return +new Date();
+				};
 			}
 
 			// Greetings to Iq/RGBA! ;)
@@ -150,6 +158,11 @@ void main( void ) {
 			if (gl) { animate(); }
 
 			function init() {
+
+				if (!document.addEventListener) {
+					document.location = 'http://get.webgl.org/';
+					return;
+				}
 
 				var effect = document.createElement( 'div' );
 				document.body.appendChild( effect );
