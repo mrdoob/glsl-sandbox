@@ -114,6 +114,21 @@ void main( void ) {
 
 		</script>
 
+		<script id="surfaceVertexShader" type="x-shader/x-vertex">
+
+			attribute vec3 position;
+			attribute vec2 surfacePosAttrib;
+			varying vec2 surfacePosition;
+
+			void main() {
+
+				surfacePosition = surfacePosAttrib;
+				gl_Position = vec4( position, 1.0 );
+
+			}
+
+		</script>
+
 		<script>
 
 			initialize_helper();
@@ -152,6 +167,7 @@ void main( void ) {
 			var toolbar, compileButton, fullscreenButton, compileTimer, errorLines = [];
 			var code, canvas, gl, buffer, currentProgram, vertexPosition,
 			parameters = { startTime: Date.now(), time: 0, mouseX: 0.5, mouseY: 0.5, screenWidth: 0, screenHeight: 0 },
+			surface = { centerX: 0, centerY: 0, width: 1, height: 1, isPanning: false, isZooming: false, lastX: 0, lastY: 0 },
 			frontTarget, backTarget, screenProgram, getWebGL, resizer = {}, compileOnChangeCode = true;
 
 			init();
@@ -284,13 +300,7 @@ void main( void ) {
 					gl.bindBuffer( gl.ARRAY_BUFFER, buffer );
 					gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( [ - 1.0, - 1.0, 1.0, - 1.0, - 1.0, 1.0, 1.0, - 1.0, 1.0, 1.0, - 1.0, 1.0 ] ), gl.STATIC_DRAW );
 
-					document.addEventListener( 'mousemove', function ( event ) {
-
-						parameters.mouseX = event.clientX / window.innerWidth;
-						parameters.mouseY = 1 - event.clientY / window.innerHeight;
-
-					}, false );
-					
+					surface.buffer = gl.createBuffer();
 				}
 
 				// initialize code editor
@@ -332,24 +342,74 @@ void main( void ) {
 					}
 				}, false );
 				
+				if (gl) {
+					canvas.addEventListener( 'mousedown', function ( event ) {
+
+						if (event.button === 0) {
+							surface.isPanning = true;
+						} else {
+							surface.isZooming = true;
+						}
+
+						surface.lastX = event.clientX;
+						surface.lastY = event.clientY;
+						event.preventDefault();
+
+					}, false );
+
+					canvas.addEventListener( 'contextmenu', function ( event ) {
+
+						event.preventDefault();
+
+					}, false);
+				}
+				
 				document.addEventListener( 'mousemove', function ( event ) {
-					var codeElement;
+					var codeElement, dx, dy;
+					
+					parameters.mouseX = event.clientX / window.innerWidth;
+					parameters.mouseY = 1 - event.clientY / window.innerHeight;
+						
 					if (resizer.isResizing) {
+
 						resizer.currentWidth = Math.max(Math.min(event.clientX - resizer.offsetMouseX, resizer.maxWidth), resizer.minWidth);
 						resizer.currentHeight = Math.max(Math.min(event.clientY - resizer.offsetMouseY, resizer.maxHeight), resizer.minWidth);
 						codeElement = code.getWrapperElement();
 						codeElement.style.width = resizer.currentWidth + 'px';
 						codeElement.style.height = resizer.currentHeight + 'px';
 						code.refresh();
+						event.preventDefault();
+
+					} else if (surface.isPanning) {
+
+						dx = event.clientX - surface.lastX;
+						dy = event.clientY - surface.lastY;
+						surface.centerX -= dx * surface.width / window.innerWidth;
+						surface.centerY += dy * surface.height / window.innerHeight;
+						surface.lastX = event.clientX;
+						surface.lastY = event.clientY;
+						computeSurfaceCorners();
+						event.preventDefault();
+
+					} else if (surface.isZooming) {
+
+						dx = event.clientX - surface.lastX;
+						dy = event.clientY - surface.lastY;
+						surface.height *= Math.pow(0.997, dx + dy);
+						surface.lastX = event.clientX;
+						surface.lastY = event.clientY;
+						computeSurfaceCorners();
+						event.preventDefault();
+
 					}
 				}, false );
 
 				document.addEventListener( 'mouseup', function ( event ) {
-					resizer.isResizing = false;
+					resizer.isResizing = surface.isPanning = surface.isZooming = false;
 				}, false );
 				
 				document.addEventListener( 'mouseleave', function ( event ) {
-					resizer.isResizing = false;
+					resizer.isResizing = surface.isPanning = surface.isZooming = false;
 				}, false );
 
 				onWindowResize();
@@ -357,6 +417,27 @@ void main( void ) {
 				load_url_code();
 
 				compileScreenProgram();
+
+			}
+
+			function computeSurfaceCorners() {
+
+				if (gl) {
+
+					surface.width = surface.height * window.innerWidth / window.innerHeight;
+					
+					var halfWidth = surface.width * 0.5, halfHeight = surface.height * 0.5;
+					
+					gl.bindBuffer( gl.ARRAY_BUFFER, surface.buffer );
+					gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( [
+						surface.centerX - halfWidth, surface.centerY - halfHeight,
+						surface.centerX + halfWidth, surface.centerY - halfHeight,
+						surface.centerX - halfWidth, surface.centerY + halfHeight,
+						surface.centerX + halfWidth, surface.centerY - halfHeight,
+						surface.centerX + halfWidth, surface.centerY + halfHeight,
+						surface.centerX - halfWidth, surface.centerY + halfHeight ] ), gl.STATIC_DRAW );
+
+				}
 
 			}
 
@@ -384,8 +465,9 @@ void main( void ) {
 
 				var program = gl.createProgram();
 				var fragment = code.getValue();
+				var vertex = document.getElementById( 'surfaceVertexShader' ).textContent;
 
-				var vs = createShader( 'attribute vec3 position; void main() { gl_Position = vec4( position, 1.0 ); }', gl.VERTEX_SHADER );
+				var vs = createShader( vertex, gl.VERTEX_SHADER );
 				var fs = createShader( fragment, gl.FRAGMENT_SHADER );
 
 				if ( vs == null || fs == null ) return null;
@@ -435,6 +517,7 @@ void main( void ) {
 				cacheUniformLocation( program, 'mouse' );
 				cacheUniformLocation( program, 'resolution' );
 				cacheUniformLocation( program, 'backbuffer' );
+				cacheUniformLocation( program, 'surfaceSize' );
 
 				// Load program into GPU
 
@@ -442,7 +525,11 @@ void main( void ) {
 
 				// Set up buffers
 
+				surface.positionAttribute = gl.getAttribLocation(currentProgram, "surfacePosAttrib");
+				gl.enableVertexAttribArray(surface.positionAttribute);
+
 				gl.bindBuffer( gl.ARRAY_BUFFER, buffer );
+				vertexPosition = gl.getAttribLocation(currentProgram, "position");
 				gl.vertexAttribPointer( vertexPosition, 2, gl.FLOAT, false, 0, 0 );
 				gl.enableVertexAttribArray( vertexPosition );
 
@@ -654,6 +741,8 @@ void main( void ) {
 				parameters.screenWidth = canvas.width;
 				parameters.screenHeight = canvas.height;
 
+				computeSurfaceCorners();
+
 				if (gl) {
 				
 					gl.viewport( 0, 0, canvas.width, canvas.height );
@@ -686,6 +775,13 @@ void main( void ) {
 				gl.uniform2f( currentProgram.uniformsCache[ 'mouse' ], parameters.mouseX, parameters.mouseY );
 				gl.uniform2f( currentProgram.uniformsCache[ 'resolution' ], parameters.screenWidth, parameters.screenHeight );
 				gl.uniform1i( currentProgram.uniformsCache[ 'backbuffer' ], 0 );
+				gl.uniform2f( currentProgram.uniformsCache[ 'surfaceSize' ], surface.width, surface.height );
+
+				gl.bindBuffer( gl.ARRAY_BUFFER, surface.buffer );
+				gl.vertexAttribPointer( surface.positionAttribute, 2, gl.FLOAT, false, 0, 0 );
+				
+				gl.bindBuffer( gl.ARRAY_BUFFER, buffer );
+				gl.vertexAttribPointer( vertexPosition, 2, gl.FLOAT, false, 0, 0 );
 
 				gl.activeTexture( gl.TEXTURE0 );
 				gl.bindTexture( gl.TEXTURE_2D, backTarget.texture );
