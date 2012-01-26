@@ -300,6 +300,8 @@ void main( void ) {
 					gl.bindBuffer( gl.ARRAY_BUFFER, buffer );
 					gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( [ - 1.0, - 1.0, 1.0, - 1.0, - 1.0, 1.0, 1.0, - 1.0, 1.0, 1.0, - 1.0, 1.0 ] ), gl.STATIC_DRAW );
 
+					// Create surface buffer (coordinates at screen corners)
+
 					surface.buffer = gl.createBuffer();
 				}
 
@@ -343,25 +345,37 @@ void main( void ) {
 				}, false );
 				
 				if (gl) {
-					canvas.addEventListener( 'mousedown', function ( event ) {
+
+					var surfaceMouseDown = function ( event ) {
+
+						if (event.shiftKey) {
+							resetSurface();
+						}
 
 						if (event.button === 0) {
 							surface.isPanning = true;
+							canvas.style.cursor = 'move';
 						} else {
 							surface.isZooming = true;
+							canvas.style.cursor = 'se-resize';
 						}
 
 						surface.lastX = event.clientX;
 						surface.lastY = event.clientY;
 						event.preventDefault();
 
-					}, false );
+					};
 
-					canvas.addEventListener( 'contextmenu', function ( event ) {
+					var noContextMenu = function ( event ) {
 
 						event.preventDefault();
 
-					}, false);
+					};
+
+					canvas.addEventListener( 'mousedown', surfaceMouseDown, false );
+					toolbar.addEventListener( 'mousedown', surfaceMouseDown, false );
+
+					canvas.addEventListener( 'contextmenu', noContextMenu, false);
 				}
 				
 				document.addEventListener( 'mousemove', function ( event ) {
@@ -406,10 +420,12 @@ void main( void ) {
 
 				document.addEventListener( 'mouseup', function ( event ) {
 					resizer.isResizing = surface.isPanning = surface.isZooming = false;
+					canvas.style.cursor = 'default';
 				}, false );
 				
 				document.addEventListener( 'mouseleave', function ( event ) {
 					resizer.isResizing = surface.isPanning = surface.isZooming = false;
+					canvas.style.cursor = 'default';
 				}, false );
 
 				onWindowResize();
@@ -424,7 +440,7 @@ void main( void ) {
 
 				if (gl) {
 
-					surface.width = surface.height * window.innerWidth / window.innerHeight;
+					surface.width = surface.height * parameters.screenWidth / parameters.screenHeight;
 					
 					var halfWidth = surface.width * 0.5, halfHeight = surface.height * 0.5;
 					
@@ -438,6 +454,14 @@ void main( void ) {
 						surface.centerX - halfWidth, surface.centerY + halfHeight ] ), gl.STATIC_DRAW );
 
 				}
+
+			}
+
+			function resetSurface() {
+
+				surface.centerX = surface.centerY = 0;
+				surface.height = 1;
+				computeSurfaceCorners();
 
 			}
 

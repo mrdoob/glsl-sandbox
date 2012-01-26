@@ -85,6 +85,7 @@ function get_img( width, height ) {
 
 	gl.viewport( 0, 0, width, height );
 	createRenderTargets();
+	resetSurface();
 
 	render();
 
@@ -151,6 +152,7 @@ function load_code(hash) {
 		else
 			saveButton.textContent = 'fork';
 
+		resetSurface();
 		compile();
 		compileOnChangeCode = true;
 	});
