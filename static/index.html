@@ -165,7 +165,7 @@ void main( void ) {
 
 			var quality = 2, quality_levels = [ 0.5, 1, 2, 4, 8 ];
 			var toolbar, compileButton, fullscreenButton, compileTimer, errorLines = [];
-			var code, canvas, gl, buffer, currentProgram, vertexPosition,
+			var code, canvas, gl, buffer, currentProgram, vertexPosition, panButton,
 			parameters = { startTime: Date.now(), time: 0, mouseX: 0.5, mouseY: 0.5, screenWidth: 0, screenHeight: 0 },
 			surface = { centerX: 0, centerY: 0, width: 1, height: 1, isPanning: false, isZooming: false, lastX: 0, lastY: 0 },
 			frontTarget, backTarget, screenProgram, getWebGL, resizer = {}, compileOnChangeCode = true;
@@ -200,6 +200,13 @@ void main( void ) {
 				var rightside = document.createElement( 'div' );
 				rightside.style.cssFloat = 'right';
 				toolbar.appendChild( rightside );
+
+				panButton = document.createElement( 'button' );
+				panButton.textContent = 'pan/zoom';
+				panButton.style.cursor = 'move';
+				panButton.style.display = 'none';
+				panButton.title = "Use 'hide code' for a large pan/zoom area.";
+				rightside.appendChild( panButton );
 
 				fullscreenButton = document.createElement( 'button' );
 				fullscreenButton.textContent = 'fullscreen';
@@ -354,10 +361,11 @@ void main( void ) {
 
 						if (event.button === 0) {
 							surface.isPanning = true;
-							canvas.style.cursor = 'move';
+							document.body.style.cursor = 'move';
 						} else {
 							surface.isZooming = true;
-							canvas.style.cursor = 'se-resize';
+							document.body.style.cursor = 'se-resize';
+							panButton.style.cursor = 'se-resize';
 						}
 
 						surface.lastX = event.clientX;
@@ -373,9 +381,10 @@ void main( void ) {
 					};
 
 					canvas.addEventListener( 'mousedown', surfaceMouseDown, false );
-					//toolbar.addEventListener( 'mousedown', surfaceMouseDown, false );
+					panButton.addEventListener( 'mousedown', surfaceMouseDown, false );
 
 					canvas.addEventListener( 'contextmenu', noContextMenu, false);
+					panButton.addEventListener( 'contextmenu', noContextMenu, false);
 				}
 				
 				document.addEventListener( 'mousemove', function ( event ) {
@@ -418,15 +427,14 @@ void main( void ) {
 					}
 				}, false );
 
-				document.addEventListener( 'mouseup', function ( event ) {
+				function settleDown ( event ) {
 					resizer.isResizing = surface.isPanning = surface.isZooming = false;
-					canvas.style.cursor = 'default';
-				}, false );
-				
-				document.addEventListener( 'mouseleave', function ( event ) {
-					resizer.isResizing = surface.isPanning = surface.isZooming = false;
-					canvas.style.cursor = 'default';
-				}, false );
+					document.body.style.cursor = 'default';
+					panButton.style.cursor = 'move';
+				}
+
+				document.addEventListener( 'mouseup', settleDown, false );
+				document.addEventListener( 'mouseleave', settleDown, false );
 
 				onWindowResize();
 				window.addEventListener( 'resize', onWindowResize, false );
@@ -534,6 +542,8 @@ void main( void ) {
 				compileButton.textContent = 'compiled succesfully';
 
 				set_save_button('visible');
+
+				panButton.style.display = (fragment.indexOf('varying vec2 surfacePosition;') >= 0) ? 'inline' : 'none';
 
 				// Cache uniforms
 
