@@ -1,0 +1,151 @@
+<!doctype html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1">
+	<title>GLSL Sandbox Diff</title>
+	<link rel="stylesheet" type="text/css" href="css/diffview.css"/>
+	<script type="text/javascript" src="js/difflib.js"></script>
+	<script type="text/javascript" src="js/diffview.js"></script>
+	<script type="text/javascript" src='js/jquery.js'></script>
+<style type="text/css">
+body {
+	font-size: 12px;
+	font-family: Sans-Serif;
+}
+h2 {
+	margin: 0.5em 0 0.1em;
+	text-align: center;
+}
+label:hover {
+	text-decoration: underline;
+}
+table.diff {
+	white-space: pre-wrap;
+}
+.textInput {
+	display: block;
+	width: 49%;
+	float: left;
+}
+.spacer {
+	margin-left: 10px;
+}
+#diffOutput {
+	width: 100%;
+}
+</style>
+
+<script type="text/javascript">
+var leftSide = { id: '', code: '', name: '', parent: null, loaded: false },
+	rightSide = { id: '', code: '', name: '', parent: null, loaded: false },
+	viewTypes = { sideBySide: 0, viewInline: 1 };
+
+function showDiff(viewType) {
+	var sm = new difflib.SequenceMatcher(leftSide.code, rightSide.code);
+	var opcodes = sm.get_opcodes();
+	var diffoutputdiv = document.getElementById("diffoutput");
+	diffoutputdiv.innerHTML = "";
+	//var contextSize = document.getElementById("contextSize").value;
+	contextSize = contextSize ? contextSize : null;
+	diffoutputdiv.appendChild(diffview.buildView({ baseTextLines:leftSide.code,
+												   newTextLines:rightSide.code,
+												   opcodes:opcodes,
+												   baseTextName:leftSide.name,
+												   newTextName:rightSide.name,
+												   //contextSize:contextSize,
+												   viewType: viewType }));
+}
+
+function computeNames() {
+	if (!leftSide.loaded) {
+		leftSide.name = 'Not loaded';
+	} else if (rightSide.parent === leftSide.id) {
+		leftSide.name = '<a href="e#' + leftSide.id + '">Parent effect ' + leftSide.id + '</a>';
+	} else {
+		leftSide.name = '<a href="e#' + leftSide.id + '">Effect ' + leftSide.id + '</a>';
+	}
+
+	if (!rightSide.loaded) {
+		rightSide.name = 'Not loaded';
+	} else if (leftSide.parent === rightSide.id) {
+		rightSide.name = '<a href="e#' + rightSide.id + '">Parent effect ' + rightSide.id + '</a>';
+	} else {
+		rightSide.name = '<a href="e#' + rightSide.id + '">Effect ' + rightSide.id + '</a>';
+	}
+}
+
+function load_code(side) {
+	$.getJSON('item/'+side.id, function(result) {
+		side.code = result.code;
+		side.parent = result.parent;
+		side.loaded = true;
+		if (leftSide.loaded && rightSide.loaded) {
+			computeNames();
+			showDiff(viewTypes.sideBySide);
+		}
+	}).error(function (jqXHR, textStatus, errorThrown) {
+		alert(textStatus);
+	});
+}
+
+function onHashChange() {
+	// hash format: #a-vs-b
+	var hash = window.location.hash,
+		pos = hash.indexOf('-vs-'),
+		newLeftID = null,
+		newRightID = null;
+	
+	if ((pos < 2) || ((hash.length - pos) < 5)) {
+		leftSide.loaded = rightSide.loaded = false;
+		leftSide.name = rightSide.name = 'invalid';
+		leftSide.code = rightSide.code = 'invalid';
+		leftSide.parent = rightSide.parent = null;
+		document.getElementById("diffoutput").innerHTML = "Invalid Diff URL.";
+	} else {
+		newLeftID = hash.substring(1, pos);
+		newRightID = hash.substring(pos + 4);
+		if (newLeftID !== leftSide.id) {
+			leftSide.id = newLeftID;
+			leftSide.name = 'Loading...';
+			leftSide.code = '';
+			leftSide.parent = null;
+			leftSide.loaded = false;
+		}
+		if (newRightID !== rightSide.id) {
+			rightSide.id = newRightID;
+			rightSide.name = 'Loading...';
+			rightSide.code = '';
+			rightSide.parent = null;
+			rightSide.loaded = false;
+		}
+		if (!(leftSide.loaded && rightSide.loaded)) {
+			document.getElementById("diffoutput").innerHTML = "Loading...";
+			if (!leftSide.loaded) {
+				load_code(leftSide);
+			}
+			if (!rightSide.loaded) {
+				load_code(rightSide);
+			}
+		}
+	}
+}
+
+// on DOM ready
+$(function () {
+	window.onhashchange = function { onHashChange(); };
+	onHashChange();
+});
+
+</script>
+</head>
+<body>
+	<h1><a href="/">GLSL Sandbox</a> Diff</h1>
+	<div>
+		<input type="button" value="Side-by-side diff" onclick="showDiff(0);"/>
+		&nbsp; &nbsp;
+		<input type="button" value="Inline diff" onclick="showDiff(1);"/>
+	</div>
+	<div id="diffoutput">Loading...</div>
+</body>
+</html>

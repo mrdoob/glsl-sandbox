@@ -1,5 +1,5 @@
 
-var saveButton, forkButton, parentButton;
+var saveButton, forkButton, parentButton, diffButton;
 var effect_owner=false;
 var original_code='';
 var original_version='';
@@ -59,6 +59,12 @@ function add_server_buttons() {
 	parentButton.href = original_version;
 	toolbar.appendChild( parentButton );
 
+	diffButton = document.createElement( 'a' );
+	diffButton.style.visibility = 'hidden';
+	diffButton.textContent = 'diff';
+	diffButton.href = '/';
+	toolbar.appendChild( diffButton );
+
 	set_parent_button('visible');
 }
 
@@ -70,10 +76,13 @@ function set_save_button(visibility) {
 }
 
 function set_parent_button(visibility) {
-	if(original_version=='')
+	if(original_version=='') {
 		parentButton.style.visibility = 'hidden';
-	else
+		diffButton.style.visibility = 'hidden';
+	} else {
 		parentButton.style.visibility = visibility;
+		diffButton.style.visibility = visibility;
+	}
 }
 
 
@@ -138,10 +147,12 @@ function load_code(hash) {
 		if(result['parent']) {
 			original_version=result['parent'];
 			parentButton.href = original_version;
+			diffButton.href = 'diff#' + original_version.substring(3) + '-vs-' + hash;
 			set_parent_button('visible');
 		} else {
 			original_version='';
 			parentButton.href = '/';
+			diffButton.href = '/';
 			set_parent_button('hidden');
 		}
 
