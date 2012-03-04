@@ -15,7 +15,12 @@ body {
 }
 h2 {
 	margin: 0.5em 0 0.1em;
-	text-align: center;
+}
+a, a:visited {
+	text-decoration: none;
+}
+a:focus, a:hover {
+	text-decoration: underline;
 }
 label:hover {
 	text-decoration: underline;
@@ -23,6 +28,9 @@ label:hover {
 }
 table.diff {
 	white-space: pre-wrap;
+}
+.top {
+	text-align: center;
 }
 .textInput {
 	display: block;
@@ -64,18 +72,18 @@ function showDiff(viewType) {
 function computeNames() {
 	if (!leftSide.loaded) {
 		leftSide.name = 'Not loaded';
-	} else if (rightSide.parent === leftSide.id) {
-		leftSide.name = 'Parent effect ' + leftSide.id;
+	} else if (rightSide.parent.substring(3) === leftSide.id) {
+		leftSide.name = 'parent effect ' + leftSide.id;
 	} else {
-		leftSide.name = 'Effect ' + leftSide.id;
+		leftSide.name = 'effect ' + leftSide.id;
 	}
 
 	if (!rightSide.loaded) {
 		rightSide.name = 'Not loaded';
-	} else if (leftSide.parent === rightSide.id) {
-		rightSide.name = 'Parent effect ' + rightSide.id;
+	} else if (leftSide.parent.substring(3) === rightSide.id) {
+		rightSide.name = 'parent effect ' + rightSide.id;
 	} else {
-		rightSide.name = 'Effect ' + rightSide.id;
+		rightSide.name = 'effect ' + rightSide.id;
 	}
 	
 	document.getElementById('subtitle').innerHTML =
@@ -150,9 +158,9 @@ $(function () {
 </script>
 </head>
 <body>
-	<h1><a href="/">GLSL Sandbox</a> Diff</h1>
-	<h2 id="subtitle">&nbsp;</h2>
-	<div>
+	<h1 class="top"><a href="/">GLSL Sandbox</a> Diff</h1>
+	<h2 class="top" id="subtitle">&nbsp;</h2>
+	<div class="top">
 		<input type="radio" name="_viewtype" checked="checked" id="sidebyside" onclick="showDiff(0);" />
 		<label for="sidebyside">Side-by-side diff</label>
 		&nbsp; &nbsp;
