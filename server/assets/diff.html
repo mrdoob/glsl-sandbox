@@ -19,6 +19,7 @@ h2 {
 }
 label:hover {
 	text-decoration: underline;
+	cursor: pointer;
 }
 table.diff {
 	white-space: pre-wrap;
@@ -31,8 +32,9 @@ table.diff {
 .spacer {
 	margin-left: 10px;
 }
-#diffOutput {
+#diffoutput {
 	width: 100%;
+	margin-top: 1em;
 }
 </style>
 
@@ -42,37 +44,43 @@ var leftSide = { id: '', code: '', name: '', parent: null, loaded: false },
 	viewTypes = { sideBySide: 0, viewInline: 1 };
 
 function showDiff(viewType) {
-	var sm = new difflib.SequenceMatcher(leftSide.code, rightSide.code);
+	var leftText = difflib.stringAsLines(leftSide.code);
+	var rightText = difflib.stringAsLines(rightSide.code);
+	var sm = new difflib.SequenceMatcher(leftText, rightText);
 	var opcodes = sm.get_opcodes();
 	var diffoutputdiv = document.getElementById("diffoutput");
 	diffoutputdiv.innerHTML = "";
-	//var contextSize = document.getElementById("contextSize").value;
-	//contextSize = contextSize ? contextSize : null;
-	diffoutputdiv.appendChild(diffview.buildView({ baseTextLines:leftSide.code,
-												   newTextLines:rightSide.code,
-												   opcodes:opcodes,
-												   baseTextName:leftSide.name,
-												   newTextName:rightSide.name,
-												   //contextSize:contextSize,
-												   viewType: viewType }));
+	diffoutputdiv.appendChild(diffview.buildView({
+		baseTextLines: leftText,
+		newTextLines: rightText,
+		opcodes: opcodes,
+		baseTextName: leftSide.name,
+		newTextName: rightSide.name,
+		contextSize: null,
+		viewType: viewType
+	}));
 }
 
 function computeNames() {
 	if (!leftSide.loaded) {
 		leftSide.name = 'Not loaded';
 	} else if (rightSide.parent === leftSide.id) {
-		leftSide.name = '<a href="e#' + leftSide.id + '">Parent effect ' + leftSide.id + '</a>';
+		leftSide.name = 'Parent effect ' + leftSide.id;
 	} else {
-		leftSide.name = '<a href="e#' + leftSide.id + '">Effect ' + leftSide.id + '</a>';
+		leftSide.name = 'Effect ' + leftSide.id;
 	}
 
 	if (!rightSide.loaded) {
 		rightSide.name = 'Not loaded';
 	} else if (leftSide.parent === rightSide.id) {
-		rightSide.name = '<a href="e#' + rightSide.id + '">Parent effect ' + rightSide.id + '</a>';
+		rightSide.name = 'Parent effect ' + rightSide.id;
 	} else {
-		rightSide.name = '<a href="e#' + rightSide.id + '">Effect ' + rightSide.id + '</a>';
+		rightSide.name = 'Effect ' + rightSide.id;
 	}
+	
+	document.getElementById('subtitle').innerHTML =
+		'<a href="e#' + leftSide.id + '">' + leftSide.name + '</a> vs. ' +
+		'<a href="e#' + rightSide.id + '">' + rightSide.name + '</a>';
 }
 
 function load_code(side) {
@@ -95,7 +103,9 @@ function onHashChange() {
 		pos = hash.indexOf('-vs-'),
 		newLeftID = null,
 		newRightID = null;
-	
+
+	document.getElementById('subtitle').innerHTML = '&nbsp;';
+
 	if ((pos < 2) || ((hash.length - pos) < 5)) {
 		leftSide.loaded = rightSide.loaded = false;
 		leftSide.name = rightSide.name = 'invalid';
@@ -141,10 +151,13 @@ $(function () {
 </head>
 <body>
 	<h1><a href="/">GLSL Sandbox</a> Diff</h1>
+	<h2 id="subtitle">&nbsp;</h2>
 	<div>
-		<input type="button" value="Side-by-side diff" onclick="showDiff(0);"/>
+		<input type="radio" name="_viewtype" checked="checked" id="sidebyside" onclick="showDiff(0);" />
+		<label for="sidebyside">Side-by-side diff</label>
 		&nbsp; &nbsp;
-		<input type="button" value="Inline diff" onclick="showDiff(1);"/>
+		<input type="radio" name="_viewtype" id="inline" onclick="showDiff(1);" />
+		<label for="inline">Inline diff</label>
 	</div>
 	<div id="diffoutput">Loading...</div>
 </body>
