@@ -47,7 +47,7 @@ function showDiff(viewType) {
 	var diffoutputdiv = document.getElementById("diffoutput");
 	diffoutputdiv.innerHTML = "";
 	//var contextSize = document.getElementById("contextSize").value;
-	contextSize = contextSize ? contextSize : null;
+	//contextSize = contextSize ? contextSize : null;
 	diffoutputdiv.appendChild(diffview.buildView({ baseTextLines:leftSide.code,
 												   newTextLines:rightSide.code,
 												   opcodes:opcodes,
