@@ -10,27 +10,49 @@
 	<script type="text/javascript" src='js/jquery.js'></script>
 <style type="text/css">
 body {
-	font-size: 12px;
-	font-family: Sans-Serif;
+	background-color: #000000;
+	font: 13px Tahoma, Arial, Helvetica, sans-serif;
+	margin: 0.5em 1em;
+	color: #888;
+}
+h1 {
+	display: block;
+	float: left;
+	font-weight: normal;
+	margin: 0.2em 0;
 }
 h2 {
 	margin: 0.5em 0 0.1em;
 }
 a, a:visited {
+	color: #aaa;
 	text-decoration: none;
+	border-bottom: 1px solid #444;
+}
+h1 a, h1 a:visited {
+	color: #009DE9;
 }
 a:focus, a:hover {
-	text-decoration: underline;
+	color: #009DE9;
+	border-bottom: 1px solid #009DE9;
 }
 label:hover {
+	color: #009DE9;
 	text-decoration: underline;
 	cursor: pointer;
 }
-table.diff {
-	white-space: pre-wrap;
+#subtitle {
+	text-align: center;
+	clear: both;
 }
 .top {
 	text-align: center;
+	margin: 1em;
+}
+.powered {
+	display: block;
+	float: right;
+	margin: 1em;
 }
 .textInput {
 	display: block;
@@ -43,6 +65,40 @@ table.diff {
 #diffoutput {
 	width: 100%;
 	margin-top: 1em;
+}
+/* give jsdiffview the dark theme */
+table.diff {
+	white-space: pre-wrap;
+	border:1px solid #334;
+}
+table.diff tbody th {
+	background: #223;
+	border:1px solid #334;
+}
+table.diff thead {
+	background: #111;
+	border-bottom:1px solid #334;
+}
+table.diff .empty {
+	background-color:#333;
+}
+table.diff .replace {
+	background-color:#FD8
+}
+table.diff .delete {
+	background-color:#E99;
+}
+table.diff .skip {
+	background-color:#111;
+	border:1px solid #555;
+	border-right:1px solid #334;
+}
+table.diff .insert {
+	background-color:#9E9;
+}
+table.diff th.author {
+	border-top:1px solid #334;
+	background:#111;
 }
 </style>
 
@@ -86,7 +142,7 @@ function computeNames() {
 		rightSide.name = 'effect ' + rightSide.id;
 	}
 	
-	document.getElementById('subtitle').innerHTML =
+	document.getElementById('subtitle').innerHTML = 'diff ' +
 		'<a href="e#' + leftSide.id + '">' + leftSide.name + '</a> vs. ' +
 		'<a href="e#' + rightSide.id + '">' + rightSide.name + '</a>';
 }
@@ -112,7 +168,7 @@ function onHashChange() {
 		newLeftID = null,
 		newRightID = null;
 
-	document.getElementById('subtitle').innerHTML = '&nbsp;';
+	document.getElementById('subtitle').innerHTML = 'diff';
 
 	if ((pos < 2) || ((hash.length - pos) < 5)) {
 		leftSide.loaded = rightSide.loaded = false;
@@ -158,8 +214,9 @@ $(function () {
 </script>
 </head>
 <body>
-	<h1 class="top"><a href="/">GLSL Sandbox</a> Diff</h1>
-	<h2 class="top" id="subtitle">&nbsp;</h2>
+	<h1><a href="/">GLSL Sandbox</a></h1>
+	<div class="powered">Powered by <a href="https://github.com/cemerick/jsdifflib">jsdifflib</a></div>
+	<h2 id="subtitle">diff</h2>
 	<div class="top">
 		<input type="radio" name="_viewtype" checked="checked" id="sidebyside" onclick="showDiff(0);" />
 		<label for="sidebyside">Side-by-side diff</label>
