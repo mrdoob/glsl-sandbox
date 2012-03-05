@@ -36,10 +36,13 @@ a:focus, a:hover {
 	color: #009DE9;
 	border-bottom: 1px solid #009DE9;
 }
+label {
+	cursor: pointer;
+	font-size: 16px;
+}
 label:hover {
 	color: #009DE9;
 	text-decoration: underline;
-	cursor: pointer;
 }
 #subtitle {
 	text-align: center;
@@ -131,7 +134,7 @@ function showDiff(viewType) {
 function computeNames() {
 	if (!leftSide.loaded) {
 		leftSide.name = 'Not loaded';
-	} else if (rightSide.parent.substring(3) === leftSide.id) {
+	} else if (rightSide.parent === leftSide.id) {
 		leftSide.name = 'parent effect ' + leftSide.id;
 	} else {
 		leftSide.name = 'effect ' + leftSide.id;
@@ -139,7 +142,7 @@ function computeNames() {
 
 	if (!rightSide.loaded) {
 		rightSide.name = 'Not loaded';
-	} else if (leftSide.parent.substring(3) === rightSide.id) {
+	} else if (leftSide.parent === rightSide.id) {
 		rightSide.name = 'parent effect ' + rightSide.id;
 	} else {
 		rightSide.name = 'effect ' + rightSide.id;
@@ -153,7 +156,11 @@ function computeNames() {
 function load_code(side) {
 	$.getJSON('item/'+side.id, function(result) {
 		side.code = result.code;
-		side.parent = result.parent;
+		if (result.parent) {
+			side.parent = result.parent.substring(3);
+		} else {
+			side.parent = null;
+		}
 		side.loaded = true;
 		if (leftSide.loaded && rightSide.loaded) {
 			computeNames();
