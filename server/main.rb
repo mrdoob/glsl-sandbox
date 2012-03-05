@@ -53,6 +53,10 @@ post '/e' do
     $glsl.save_effect(body)
 end
 
+get '/diff' do
+    send_file 'server/assets/diff.html'
+end
+
 
 # redirects
 

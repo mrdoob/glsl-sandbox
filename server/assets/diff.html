@@ -1,0 +1,239 @@
+<!doctype html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1">
+	<title>GLSL Sandbox Diff</title>
+	<link rel="stylesheet" type="text/css" href="css/diffview.css"/>
+	<script type="text/javascript" src="js/difflib.js"></script>
+	<script type="text/javascript" src="js/diffview.js"></script>
+	<script type="text/javascript" src='js/jquery.js'></script>
+<style type="text/css">
+body {
+	background-color: #000000;
+	font: 13px Tahoma, Arial, Helvetica, sans-serif;
+	margin: 0.5em 1em;
+	color: #888;
+}
+h1 {
+	display: block;
+	float: left;
+	font-weight: normal;
+	margin: 0.2em 0;
+}
+h2 {
+	margin: 0.5em 0 0.1em;
+}
+a, a:visited {
+	color: #aaa;
+	text-decoration: none;
+	border-bottom: 1px solid #444;
+}
+h1 a, h1 a:visited {
+	color: #009DE9;
+}
+a:focus, a:hover {
+	color: #009DE9;
+	border-bottom: 1px solid #009DE9;
+}
+label {
+	cursor: pointer;
+	font-size: 16px;
+}
+label:hover {
+	color: #009DE9;
+	text-decoration: underline;
+}
+#subtitle {
+	text-align: center;
+	clear: both;
+}
+.top {
+	text-align: center;
+	margin: 1em;
+}
+.powered {
+	display: block;
+	float: right;
+	margin: 1em;
+}
+.textInput {
+	display: block;
+	width: 49%;
+	float: left;
+}
+.spacer {
+	margin-left: 10px;
+}
+#diffoutput {
+	width: 100%;
+	margin-top: 1em;
+}
+/* give jsdiffview the dark theme */
+table.diff {
+	white-space: pre-wrap;
+	border:1px solid #334;
+}
+table.diff tbody th {
+	background: #223;
+	border:1px solid #334;
+}
+table.diff thead {
+	background: #111;
+	border-bottom:1px solid #334;
+}
+table.diff .empty {
+	background-color:#222;
+}
+table.diff .replace {
+	background-color:#431;
+	color: #FD8;
+}
+table.diff .delete {
+	background-color:#411;
+	color: #f88;
+}
+table.diff .skip {
+	background-color:#111;
+	border:1px solid #555;
+	border-right:1px solid #334;
+}
+table.diff .insert {
+	background-color:#141;
+	color: #0f0;
+}
+table.diff th.author {
+	border-top:1px solid #334;
+	background:#111;
+}
+</style>
+
+<script type="text/javascript">
+var leftSide = { id: '', code: '', name: '', parent: null, loaded: false },
+	rightSide = { id: '', code: '', name: '', parent: null, loaded: false },
+	viewTypes = { sideBySide: 0, viewInline: 1 };
+
+function showDiff(viewType) {
+	var leftText = difflib.stringAsLines(leftSide.code);
+	var rightText = difflib.stringAsLines(rightSide.code);
+	var sm = new difflib.SequenceMatcher(leftText, rightText);
+	var opcodes = sm.get_opcodes();
+	var diffoutputdiv = document.getElementById("diffoutput");
+	diffoutputdiv.innerHTML = "";
+	diffoutputdiv.appendChild(diffview.buildView({
+		baseTextLines: leftText,
+		newTextLines: rightText,
+		opcodes: opcodes,
+		baseTextName: leftSide.name,
+		newTextName: rightSide.name,
+		contextSize: null,
+		viewType: viewType
+	}));
+}
+
+function computeNames() {
+	if (!leftSide.loaded) {
+		leftSide.name = 'Not loaded';
+	} else if (rightSide.parent === leftSide.id) {
+		leftSide.name = 'parent effect ' + leftSide.id;
+	} else {
+		leftSide.name = 'effect ' + leftSide.id;
+	}
+
+	if (!rightSide.loaded) {
+		rightSide.name = 'Not loaded';
+	} else if (leftSide.parent === rightSide.id) {
+		rightSide.name = 'parent effect ' + rightSide.id;
+	} else {
+		rightSide.name = 'effect ' + rightSide.id;
+	}
+	
+	document.getElementById('subtitle').innerHTML = 'diff ' +
+		'<a href="e#' + leftSide.id + '">' + leftSide.name + '</a> vs. ' +
+		'<a href="e#' + rightSide.id + '">' + rightSide.name + '</a>';
+}
+
+function load_code(side) {
+	$.getJSON('item/'+side.id, function(result) {
+		side.code = result.code;
+		if (result.parent) {
+			side.parent = result.parent.substring(3);
+		} else {
+			side.parent = null;
+		}
+		side.loaded = true;
+		if (leftSide.loaded && rightSide.loaded) {
+			computeNames();
+			showDiff(viewTypes.sideBySide);
+		}
+	}).error(function (jqXHR, textStatus, errorThrown) {
+		alert(textStatus);
+	});
+}
+
+function onHashChange() {
+	// hash format: #a-vs-b
+	var hash = window.location.hash,
+		pos = hash.indexOf('-vs-'),
+		newLeftID = null,
+		newRightID = null;
+
+	document.getElementById('subtitle').innerHTML = 'diff';
+
+	if ((pos < 2) || ((hash.length - pos) < 5)) {
+		leftSide.loaded = rightSide.loaded = false;
+		leftSide.name = rightSide.name = 'invalid';
+		leftSide.code = rightSide.code = 'invalid';
+		leftSide.parent = rightSide.parent = null;
+		document.getElementById("diffoutput").innerHTML = "Invalid Diff URL.";
+	} else {
+		newLeftID = hash.substring(1, pos);
+		newRightID = hash.substring(pos + 4);
+		if (newLeftID !== leftSide.id) {
+			leftSide.id = newLeftID;
+			leftSide.name = 'Loading...';
+			leftSide.code = '';
+			leftSide.parent = null;
+			leftSide.loaded = false;
+		}
+		if (newRightID !== rightSide.id) {
+			rightSide.id = newRightID;
+			rightSide.name = 'Loading...';
+			rightSide.code = '';
+			rightSide.parent = null;
+			rightSide.loaded = false;
+		}
+		if (!(leftSide.loaded && rightSide.loaded)) {
+			document.getElementById("diffoutput").innerHTML = "Loading...";
+			if (!leftSide.loaded) {
+				load_code(leftSide);
+			}
+			if (!rightSide.loaded) {
+				load_code(rightSide);
+			}
+		}
+	}
+}
+
+// on DOM ready
+$(function () {
+	window.onhashchange = function () { onHashChange(); };
+	onHashChange();
+});
+
+</script>
+</head>
+<body>
+	<h1><a href="/">GLSL Sandbox</a></h1>
+	<div class="powered">Powered by <a href="https://github.com/cemerick/jsdifflib">jsdifflib</a></div>
+	<h2 id="subtitle">diff</h2>
+	<div class="top">
+		<input type="radio" name="_viewtype" checked="checked" id="sidebyside" onclick="showDiff(0);" />
+		<label for="sidebyside">Side-by-side diff</label>
+		&nbsp; &nbsp;
+		<input type="radio" name="_viewtype" id="inline" onclick="showDiff(1);" />
+		<label for="inline">Inline diff</label>
+	</div>
+	<div id="diffoutput">Loading...</div>
+</body>
+</html>
