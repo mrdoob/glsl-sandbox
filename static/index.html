@@ -165,7 +165,7 @@ void main( void ) {
 
 			var quality = 2, quality_levels = [ 0.5, 1, 2, 4, 8 ];
 			var toolbar, compileButton, fullscreenButton, compileTimer, errorLines = [];
-			var code, canvas, gl, buffer, currentProgram, vertexPosition, panButton,
+			var code, canvas, gl, buffer, currentProgram, vertexPosition, screenVertexPosition, panButton,
 			parameters = { startTime: Date.now(), time: 0, mouseX: 0.5, mouseY: 0.5, screenWidth: 0, screenHeight: 0 },
 			surface = { centerX: 0, centerY: 0, width: 1, height: 1, isPanning: false, isZooming: false, lastX: 0, lastY: 0 },
 			frontTarget, backTarget, screenProgram, getWebGL, resizer = {}, compileOnChangeCode = true;
@@ -562,9 +562,7 @@ void main( void ) {
 				surface.positionAttribute = gl.getAttribLocation(currentProgram, "surfacePosAttrib");
 				gl.enableVertexAttribArray(surface.positionAttribute);
 
-				gl.bindBuffer( gl.ARRAY_BUFFER, buffer );
 				vertexPosition = gl.getAttribLocation(currentProgram, "position");
-				gl.vertexAttribPointer( vertexPosition, 2, gl.FLOAT, false, 0, 0 );
 				gl.enableVertexAttribArray( vertexPosition );
 
 			}
@@ -598,8 +596,13 @@ void main( void ) {
 
 				screenProgram = program;
 
+				gl.useProgram( screenProgram );
+
 				cacheUniformLocation( program, 'resolution' );
 				cacheUniformLocation( program, 'texture' );
+
+				screenVertexPosition = gl.getAttribLocation(screenProgram, "position");
+				gl.enableVertexAttribArray( screenVertexPosition );
 
 			}
 
@@ -834,6 +837,9 @@ void main( void ) {
 				gl.uniform2f( screenProgram.uniformsCache[ 'resolution' ], parameters.screenWidth, parameters.screenHeight );
 				gl.uniform1i( screenProgram.uniformsCache[ 'texture' ], 1 );
 
+				gl.bindBuffer( gl.ARRAY_BUFFER, buffer );
+				gl.vertexAttribPointer( screenVertexPosition, 2, gl.FLOAT, false, 0, 0 );
+				
 				gl.activeTexture( gl.TEXTURE1 );
 				gl.bindTexture( gl.TEXTURE_2D, frontTarget.texture );
 
