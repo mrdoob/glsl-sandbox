@@ -601,7 +601,7 @@ void main( void ) {
 				cacheUniformLocation( program, 'resolution' );
 				cacheUniformLocation( program, 'texture' );
 
-				screenVertexPosition = gl.getAttribLocation(currentProgram, "position");
+				screenVertexPosition = gl.getAttribLocation(screenProgram, "position");
 				gl.enableVertexAttribArray( screenVertexPosition );
 
 			}
