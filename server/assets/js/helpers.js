@@ -30,7 +30,7 @@ function get_user_id() {
 }
 
 function am_i_owner() {
-	return (effect_owner==false || effect_owner==get_user_id());
+	return (effect_owner && effect_owner==get_user_id());
 }
 
 function load_url_code() {
