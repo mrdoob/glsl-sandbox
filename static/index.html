@@ -234,18 +234,19 @@ void main( void ) {
 				button.textContent = 'hide code';
 				button.addEventListener( 'click', function ( event ) {
 
-					if ( code.getWrapperElement().style.visibility === 'visible' ) {
+					if ( isCodeVisible() ) {
 
 						button.textContent = 'show code';
-						code.getWrapperElement().style.visibility = 'hidden';
+						code.getWrapperElement().style.display = 'none';
 						compileButton.style.visibility = 'hidden';
 						set_save_button('hidden');
 						set_parent_button('hidden');
+						stopHideUI();
 
 					} else {
 
 						button.textContent = 'hide code';
-						code.getWrapperElement().style.visibility = 'visible';
+						code.getWrapperElement().style.display = '';
 						compileButton.style.visibility = 'visible';
 						set_save_button('visible');
 						set_parent_button('visible');
@@ -327,7 +328,7 @@ void main( void ) {
 						}
 					}
 				});
-				code.getWrapperElement().style.visibility = 'visible';
+				code.getWrapperElement().style.display = '';
 
 				resizer.offsetMouseX = 0;
 				resizer.offsetMouseY = 0;
@@ -387,16 +388,30 @@ void main( void ) {
 					panButton.addEventListener( 'contextmenu', noContextMenu, false);
 				}
 				
+				var clientXLast, clientYLast;
+
 				document.addEventListener( 'mousemove', function ( event ) {
+
+					var clientX = event.clientX;
+					var clientY = event.clientY;
+
+					if (clientXLast == clientX && clientYLast == clientY)
+						return;
+
+					clientXLast = clientX;
+					clientYLast = clientY;
+
+					stopHideUI();
+
 					var codeElement, dx, dy;
 					
-					parameters.mouseX = event.clientX / window.innerWidth;
-					parameters.mouseY = 1 - event.clientY / window.innerHeight;
+					parameters.mouseX = clientX / window.innerWidth;
+					parameters.mouseY = 1 - clientY / window.innerHeight;
 						
 					if (resizer.isResizing) {
 
-						resizer.currentWidth = Math.max(Math.min(event.clientX - resizer.offsetMouseX, resizer.maxWidth), resizer.minWidth);
-						resizer.currentHeight = Math.max(Math.min(event.clientY - resizer.offsetMouseY, resizer.maxHeight), resizer.minWidth);
+						resizer.currentWidth = Math.max(Math.min(clientX - resizer.offsetMouseX, resizer.maxWidth), resizer.minWidth);
+						resizer.currentHeight = Math.max(Math.min(clientY - resizer.offsetMouseY, resizer.maxHeight), resizer.minWidth);
 						codeElement = code.getWrapperElement();
 						codeElement.style.width = resizer.currentWidth + 'px';
 						codeElement.style.height = resizer.currentHeight + 'px';
@@ -405,22 +420,22 @@ void main( void ) {
 
 					} else if (surface.isPanning) {
 
-						dx = event.clientX - surface.lastX;
-						dy = event.clientY - surface.lastY;
+						dx = clientX - surface.lastX;
+						dy = clientY - surface.lastY;
 						surface.centerX -= dx * surface.width / window.innerWidth;
 						surface.centerY += dy * surface.height / window.innerHeight;
-						surface.lastX = event.clientX;
-						surface.lastY = event.clientY;
+						surface.lastX = clientX;
+						surface.lastY = clientY;
 						computeSurfaceCorners();
 						event.preventDefault();
 
 					} else if (surface.isZooming) {
 
-						dx = event.clientX - surface.lastX;
-						dy = event.clientY - surface.lastY;
+						dx = clientX - surface.lastX;
+						dy = clientY - surface.lastY;
 						surface.height *= Math.pow(0.997, dx + dy);
-						surface.lastX = event.clientX;
-						surface.lastY = event.clientY;
+						surface.lastX = clientX;
+						surface.lastY = clientY;
 						computeSurfaceCorners();
 						event.preventDefault();
 
@@ -433,8 +448,15 @@ void main( void ) {
 					panButton.style.cursor = 'move';
 				}
 
+				function mouseLeave(event) {
+					settleDown(event);
+
+					if (!isCodeVisible())
+						startHideUITimer();
+				}
+
 				document.addEventListener( 'mouseup', settleDown, false );
-				document.addEventListener( 'mouseleave', settleDown, false );
+				document.addEventListener( 'mouseleave', mouseLeave, false );
 
 				onWindowResize();
 				window.addEventListener( 'resize', onWindowResize, false );
@@ -443,6 +465,52 @@ void main( void ) {
 				compileScreenProgram();
 
 			}
+
+			function isCodeVisible() {
+				return code && code.getWrapperElement().style.display !== 'none';
+			}
+
+			var hideUITimer;
+			var isUIHidden = false;
+
+			function startHideUITimer () {
+
+				stopHideUITimer();
+				if (!isUIHidden && !isCodeVisible())
+					hideUITimer = window.setTimeout(onHideUITimer, 1000 * 5 );
+
+				function onHideUITimer() {
+
+					stopHideUITimer();
+					if (!isUIHidden && !isCodeVisible()) {
+
+						isUIHidden = true;
+						toolbar.style.display = 'none';
+						document.body.style.cursor = 'none';
+					}
+				}
+
+				function stopHideUITimer () {
+
+					if (hideUITimer) {
+
+						window.clearTimeout(hideUITimer);
+						hideUITimer = 0;
+					}
+				}
+			}
+
+			function stopHideUI () {
+
+				if (isUIHidden) {
+
+					isUIHidden = false;
+					toolbar.style.display = '';
+					document.body.style.cursor = '';
+				}
+				startHideUITimer();
+			}
+
 
 			function computeSurfaceCorners() {
 
