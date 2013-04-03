@@ -63,7 +63,7 @@ class GlslDatabase
             :update => {
                 '$set' => {
                     :modified_at => time,
-                    :image => code_data['image'].tr!(%q{"'><}, '')
+                    :image => code_data['image'].tr(%q{"'><}, '')
                 },
                 '$push' => { :versions => data }
             }
