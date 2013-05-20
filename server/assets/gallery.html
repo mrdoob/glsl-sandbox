@@ -91,7 +91,7 @@ Saving is temporarily disabled :(
 <div id="gallery">
 
 <% effects.each do |effect| %>
-	<a href='/e#<%= effect['_id'] %>.<%= effect['versions'].length-1 %>'><img src='<%= effect['image'] %>'></a>
+	<a href='/e#<%= effect['_id'] %>.<%= effect['versions'].length-1 %>'><img src='<%= image(effect) %>'></a>
 <% end %>
 
 </div>
