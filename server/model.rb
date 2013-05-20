@@ -34,8 +34,11 @@ class Effects
     end
 
     def image(effect)
-        "http://res.cloudinary.com/#{CLOUDINARY_PROJECT}/image/upload/"<<
-            "#{IMAGE_PREFIX}#{effect['_id']}.png"
+        if effect["image_url"]
+            effect["image_url"]
+        else
+            effect["image"]
+        end
     end
 end
 
@@ -63,19 +66,22 @@ class GlslDatabase
             :code => code_data['code']
         }
 
+        res=Cloudinary::Uploader.upload(
+            code_data['image'],
+            :public_id => code_id.to_s)
+
+        image_url=res['url']
+
         @code.find_and_modify({
             :query => { :_id => code_id },
             :update => {
                 '$set' => {
-                    :modified_at => time
+                    :modified_at    => time,
+                    :image_url      => image_url
                 },
                 '$push' => { :versions => data }
             }
         })
-
-        Cloudinary::Uploader.upload(
-            code_data['image'],
-            :public_id => IMAGE_PREFIX+code_id.to_s)
 
         code=$glsl.get_code(code_id)
 

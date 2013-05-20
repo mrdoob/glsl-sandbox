@@ -16,9 +16,6 @@ configure do
     set :public_folder, 'server/assets'
 
     GALLERY=ERB.new(File.read('server/assets/gallery.html'))
-    IMAGE_PREFIX=ENV['IMAGE_PREFIX']||''
-    uri=URI.parse(ENV['CLOUDINARY_URL'])
-    CLOUDINARY_PROJECT=uri.host
 
     $glsl=GlslDatabase.new
 
