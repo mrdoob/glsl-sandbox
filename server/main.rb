@@ -49,8 +49,10 @@ get %r{/item/(\d+)([/.](\d+))?} do
 end
 
 post '/e' do
-    body=request.body.read
-    $glsl.save_effect(body)
+    #body=request.body.read
+    #$glsl.save_effect(body)
+
+    "Saving is temporarily disabled :("
 end
 
 get '/diff' do
@@ -61,7 +63,8 @@ end
 # redirects
 
 get '/new' do
-    redirect '/e', 301
+    #redirect '/e', 301
+    redirect '/', 301
 end
 
 get %r{^/(\d+)(/(\d+))?$} do
