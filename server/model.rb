@@ -91,6 +91,7 @@ class GlslDatabase
     end
 
     def save_effect(code)
+        return "/"
         code_data=JSON.parse(code)
 
         if code_data['code_id'] && !code_data['code_id'].empty?
