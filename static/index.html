@@ -794,12 +794,14 @@ void main( void ) {
 						indexEnd = error.indexOf(':', index);
 						if (indexEnd > index) {
 							lineNum = parseInt(error.substring(index, indexEnd));
-							index = indexEnd + 1;
-							indexEnd = error.indexOf("ERROR: 0:", index);
-							lineError = htmlEncode((indexEnd > index) ? error.substring(index, indexEnd) : error.substring(index));
-							line = code.setMarker(lineNum - 1, '<abbr title="' + lineError + '">' + lineNum + '</abbr>', "errorMarker");
-							code.setLineClass(line, "errorLine");
-							errorLines.push(line);
+							if ((!isNaN(lineNum)) && (lineNum > 0)) {
+								index = indexEnd + 1;
+								indexEnd = error.indexOf("ERROR: 0:", index);
+								lineError = htmlEncode((indexEnd > index) ? error.substring(index, indexEnd) : error.substring(index));
+								line = code.setMarker(lineNum - 1, '<abbr title="' + lineError + '">' + lineNum + '</abbr>', "errorMarker");
+								code.setLineClass(line, "errorLine");
+								errorLines.push(line);
+							}
 						}
 					}
 
