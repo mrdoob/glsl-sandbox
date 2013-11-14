@@ -9,7 +9,8 @@
 			body {
 
 				background-color: #000000;
-				margin: 0px;
+				margin: 0;
+				padding: 0;
 				overflow: hidden;
 
 			}
@@ -180,11 +181,9 @@ void main( void ) {
 					return;
 				}
 
-				var effect = document.createElement( 'div' );
-				document.body.appendChild( effect );
-
 				canvas = document.createElement( 'canvas' );
-				effect.appendChild( canvas );
+				canvas.style.display = 'block';
+				document.body.appendChild( canvas );
 
 				//
 
