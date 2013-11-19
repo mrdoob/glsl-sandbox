@@ -9,7 +9,8 @@
 			body {
 
 				background-color: #000000;
-				margin: 0px;
+				margin: 0;
+				padding: 0;
 				overflow: hidden;
 
 			}
@@ -180,11 +181,9 @@ void main( void ) {
 					return;
 				}
 
-				var effect = document.createElement( 'div' );
-				document.body.appendChild( effect );
-
 				canvas = document.createElement( 'canvas' );
-				effect.appendChild( canvas );
+				canvas.style.display = 'block';
+				document.body.appendChild( canvas );
 
 				//
 
@@ -607,7 +606,7 @@ void main( void ) {
 				currentProgram = program;
 
 				compileButton.style.color = '#00ff00';
-				compileButton.textContent = 'compiled succesfully';
+				compileButton.textContent = 'compiled successfully';
 
 				set_save_button('visible');
 
@@ -794,12 +793,14 @@ void main( void ) {
 						indexEnd = error.indexOf(':', index);
 						if (indexEnd > index) {
 							lineNum = parseInt(error.substring(index, indexEnd));
-							index = indexEnd + 1;
-							indexEnd = error.indexOf("ERROR: 0:", index);
-							lineError = htmlEncode((indexEnd > index) ? error.substring(index, indexEnd) : error.substring(index));
-							line = code.setMarker(lineNum - 1, '<abbr title="' + lineError + '">' + lineNum + '</abbr>', "errorMarker");
-							code.setLineClass(line, "errorLine");
-							errorLines.push(line);
+							if ((!isNaN(lineNum)) && (lineNum > 0)) {
+								index = indexEnd + 1;
+								indexEnd = error.indexOf("ERROR: 0:", index);
+								lineError = htmlEncode((indexEnd > index) ? error.substring(index, indexEnd) : error.substring(index));
+								line = code.setMarker(lineNum - 1, '<abbr title="' + lineError + '">' + lineNum + '</abbr>', "errorMarker");
+								code.setLineClass(line, "errorLine");
+								errorLines.push(line);
+							}
 						}
 					}
 
