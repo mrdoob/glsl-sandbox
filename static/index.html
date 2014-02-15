@@ -167,7 +167,7 @@ void main( void ) {
 			var quality = 2, quality_levels = [ 0.5, 1, 2, 4, 8 ];
 			var toolbar, compileButton, fullscreenButton, compileTimer, errorLines = [];
 			var code, canvas, gl, buffer, currentProgram, vertexPosition, screenVertexPosition, panButton,
-			parameters = { startTime: Date.now(), time: 0, mouseX: 0.5, mouseY: 0.5, screenWidth: 0, screenHeight: 0 },
+			parameters = { startTime: Date.now(), time: 0, prevTime: 0, mouseX: 0.5, mouseY: 0.5, screenWidth: 0, screenHeight: 0 },
 			surface = { centerX: 0, centerY: 0, width: 1, height: 1, isPanning: false, isZooming: false, lastX: 0, lastY: 0 },
 			frontTarget, backTarget, screenProgram, getWebGL, resizer = {}, compileOnChangeCode = true;
 
@@ -615,6 +615,7 @@ void main( void ) {
 				// Cache uniforms
 
 				cacheUniformLocation( program, 'time' );
+				cacheUniformLocation( program, 'dtime' );
 				cacheUniformLocation( program, 'mouse' );
 				cacheUniformLocation( program, 'resolution' );
 				cacheUniformLocation( program, 'backbuffer' );
@@ -871,6 +872,7 @@ void main( void ) {
 
 				if ( !currentProgram ) return;
 
+				parameters.prevTime = parameters.time;
 				parameters.time = Date.now() - parameters.startTime;
 
 				// Set uniforms for custom shader
@@ -878,6 +880,7 @@ void main( void ) {
 				gl.useProgram( currentProgram );
 
 				gl.uniform1f( currentProgram.uniformsCache[ 'time' ], parameters.time / 1000 );
+				gl.uniform1f( currentProgram.uniformsCache[ 'dtime' ], ( parameters.time - parameters.prevTime ) / 1000 );
 				gl.uniform2f( currentProgram.uniformsCache[ 'mouse' ], parameters.mouseX, parameters.mouseY );
 				gl.uniform2f( currentProgram.uniformsCache[ 'resolution' ], parameters.screenWidth, parameters.screenHeight );
 				gl.uniform1i( currentProgram.uniformsCache[ 'backbuffer' ], 0 );
