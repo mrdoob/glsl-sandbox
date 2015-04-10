@@ -63,9 +63,7 @@
 		<script src="js/codemirror.js"></script>
 		<script src="js/glsl.js"></script>
 
-		<script id="example" type="x-shader/x-fragment">#ifdef GL_ES
-precision mediump float;
-#endif
+		<script id="example" type="x-shader/x-fragment">precision mediump float;
 
 uniform float time;
 uniform vec2 mouse;
@@ -87,9 +85,7 @@ void main( void ) {
 
 		<script id="fragmentShader" type="x-shader/x-fragment">
 
-			#ifdef GL_ES
 			precision mediump float;
-			#endif
 
 			uniform vec2 resolution;
 			uniform sampler2D texture;
