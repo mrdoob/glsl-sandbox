@@ -57,6 +57,8 @@
 		<link rel="stylesheet" href="css/codemirror.css">
 		<link rel="stylesheet" href="css/default.css">
 
+        <script src="js/gif.js"></script>
+        <script src="js/whammy.js"></script>
 		<script src="js/lzma.js"></script>
 		<script src='js/jquery.js'></script>
 		<script src='js/helpers.js'></script>
@@ -250,6 +252,86 @@ void main( void ) {
 
 				}, false );
 				toolbar.appendChild( button );
+
+                var output = 'gif', output_types = ['gif','webm'];
+                var render_btn = document.createElement( 'button' );
+				render_btn.textContent = 'render';
+				render_btn.addEventListener( 'click', function ( event ) {
+
+                    var width = prompt( "Width of the movie.\nSuggested range: 640-1920", canvas.width );
+                    var height = prompt( "Height of the movie.\nSuggested range: 480-1080", canvas.height );
+                    var frames = prompt( "Frames to be rendered.\nSuggested range: 1-240", 60 );
+
+                    while( isNaN(width) === true ){
+                        width = prompt("Width of the movie.\nSuggested range: 640-1920", canvas.width);
+                    }
+                    while( isNaN(height) === true ){
+                        height = prompt( "Height of the movie.\nSuggested range: 480-1080", canvas.height);
+                    }
+
+                    while( isNaN(frames) === true ){
+                        frames = prompt("Frames to be rendered.\nSuggested range: 1-240", 60);
+                    }
+
+                    if( render_select.value === output_types[0] ){
+                        render_btn.textContent = 'rendering...';
+
+                        var gif = new GIF({
+                          workers: 16,
+                          quality: 10,
+                          width: width,
+                          height: height
+                        });
+
+                        for(var i=0; i<frames; i++)
+                            gif.addFrame(canvas, {delay: 30});
+
+                        gif.on('finished', function(blob) {
+                            window.open(URL.createObjectURL(blob));
+                            render_btn.textContent = 'render';
+                        });
+
+                        gif.render();
+                    }
+                    else if( render_select.value === output_types[1] ){
+                        render_btn.textContent = 'rendering...';
+
+                        var video = new Whammy.Video(30);
+
+                        (function theLoop (i) {
+                          setTimeout(function () {
+                            video.add(canvas);
+                            if (--i) {          // If i > 0, keep going
+                              theLoop(i);       // Call the loop again, and pass it the current value of i
+                            }else{
+                                var output = video.compile();
+                                render_btn.textContent = 'render';
+                                window.open(URL.createObjectURL(output));
+                            }
+                          }, 30);
+                        })(frames);
+                    }
+
+				}, false );
+
+				toolbar.appendChild( render_btn );
+
+                var render_select = document.createElement( 'select' );
+
+                for ( var i = 0; i < output_types.length; i ++ ) {
+
+                    var option = document.createElement( 'option' );
+                    option.textContent = output_types[ i ];
+                    if ( output_types[ i ] == output ) option.selected = true;
+                    render_select.appendChild( option );
+
+                }
+
+                render_select.addEventListener( 'change', function ( event ) {
+					output = output_types[ event.target.selectedIndex ];
+				}, false );
+
+                toolbar.appendChild( render_select );
 
 				var select = document.createElement( 'select' );
 
