@@ -253,14 +253,17 @@ void main( void ) {
 				}, false );
 				toolbar.appendChild( button );
 
-                var output = 'gif', output_types = ['gif','webm'];
+                var output = 'webm', output_types = ['gif', 'webm', 'jpeg', 'png'];
                 var render_btn = document.createElement( 'button' );
 				render_btn.textContent = 'render';
 				render_btn.addEventListener( 'click', function ( event ) {
+                    if( render_btn.textContent === 'rendering...' )
+                        return null;
 
-                    var width = prompt( "Width of the movie.\nSuggested range: 640-1920", canvas.width );
-                    var height = prompt( "Height of the movie.\nSuggested range: 480-1080", canvas.height );
-                    var frames = prompt( "Frames to be rendered.\nSuggested range: 1-240", 60 );
+                    var width, height, frames;
+
+                    width = prompt( "Width of the movie.\nSuggested range: 640-1920", canvas.width );
+                    height = prompt( "Height of the movie.\nSuggested range: 480-1080", canvas.height );
 
                     while( isNaN(width) === true ){
                         width = prompt("Width of the movie.\nSuggested range: 640-1920", canvas.width);
@@ -269,11 +272,12 @@ void main( void ) {
                         height = prompt( "Height of the movie.\nSuggested range: 480-1080", canvas.height);
                     }
 
-                    while( isNaN(frames) === true ){
-                        frames = prompt("Frames to be rendered.\nSuggested range: 1-240", 60);
-                    }
-
                     if( render_select.value === output_types[0] ){
+                        frames = prompt( "Frames to be rendered.\nSuggested range: 1-240", 60 );
+                        while( isNaN(frames) === true ){
+                            frames = prompt("Frames to be rendered.\nSuggested range: 1-240", 60);
+                        }
+
                         render_btn.textContent = 'rendering...';
 
                         var gif = new GIF({
@@ -294,6 +298,11 @@ void main( void ) {
                         gif.render();
                     }
                     else if( render_select.value === output_types[1] ){
+                        frames = prompt( "Frames to be rendered.\nSuggested range: 1-240", 60 );
+                        while( isNaN(frames) === true ){
+                            frames = prompt("Frames to be rendered.\nSuggested range: 1-240", 60);
+                        }
+
                         render_btn.textContent = 'rendering...';
 
                         var video = new Whammy.Video(30);
@@ -310,6 +319,12 @@ void main( void ) {
                             }
                           }, 30);
                         })(frames);
+                    }
+                    else if( render_select.value === output_types[2] ){
+                        window.open(canvas.toDataURL("image/jpeg"));
+                    }
+                    else if( render_select.value === output_types[3] ){
+                        window.open(canvas.toDataURL("image/png"));
                     }
 
 				}, false );
