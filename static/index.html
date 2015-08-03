@@ -265,16 +265,16 @@ void main( void ) {
                     width = prompt( "Width of the movie.\nSuggested range: 640-1920", canvas.width );
                     height = prompt( "Height of the movie.\nSuggested range: 480-1080", canvas.height );
 
-                    while( isNaN(width) === true ){
+                    while( isNaN(width) === true || typeof(width) === 'undefined' ){
                         width = prompt("Width of the movie.\nSuggested range: 640-1920", canvas.width);
                     }
-                    while( isNaN(height) === true ){
+                    while( isNaN(height) === true || typeof(height) === 'undefined' ){
                         height = prompt( "Height of the movie.\nSuggested range: 480-1080", canvas.height);
                     }
 
                     if( render_select.value === output_types[0] ){
                         frames = prompt( "Frames to be rendered.\nSuggested range: 1-240", 60 );
-                        while( isNaN(frames) === true ){
+                        while( isNaN(frames) === true || typeof(frames) === 'undefined' ){
                             frames = prompt("Frames to be rendered.\nSuggested range: 1-240", 60);
                         }
 
@@ -287,8 +287,9 @@ void main( void ) {
                           height: height
                         });
 
-                        for(var i=0; i<frames; i++)
+                        for(var i=0; i<frames; i++){
                             gif.addFrame(canvas, {delay: 30});
+                        }
 
                         gif.on('finished', function(blob) {
                             window.open(URL.createObjectURL(blob));
@@ -299,25 +300,24 @@ void main( void ) {
                     }
                     else if( render_select.value === output_types[1] ){
                         frames = prompt( "Frames to be rendered.\nSuggested range: 1-240", 60 );
-                        while( isNaN(frames) === true ){
+                        while( isNaN(frames) === true || typeof(frames) === 'undefined' ){
                             frames = prompt("Frames to be rendered.\nSuggested range: 1-240", 60);
                         }
-
-                        render_btn.textContent = 'rendering...';
 
                         var video = new Whammy.Video(30);
 
                         (function theLoop (i) {
-                          setTimeout(function () {
-                            video.add(canvas);
-                            if (--i) {          // If i > 0, keep going
-                              theLoop(i);       // Call the loop again, and pass it the current value of i
-                            }else{
-                                var output = video.compile();
-                                render_btn.textContent = 'render';
-                                window.open(URL.createObjectURL(output));
-                            }
-                          }, 30);
+                            render_btn.textContent = 'rendering... ' + (frames-i);
+                            setTimeout(function () {
+                                video.add(canvas);
+                                if (--i) {
+                                  theLoop(i);
+                                }else{
+                                    var output = video.compile();
+                                    render_btn.textContent = 'render';
+                                    window.open(URL.createObjectURL(output));
+                                }
+                            }, 30);
                         })(frames);
                     }
                     else if( render_select.value === output_types[2] ){
