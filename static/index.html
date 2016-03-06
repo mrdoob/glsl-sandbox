@@ -329,6 +329,8 @@ void main( void ) {
 
 				} else {
 					
+					gl.pixelStorei( gl.UNPACK_FLIP_Y_WEBGL, true );
+
 					// enable dFdx, dFdy, fwidth
 					gl.getExtension('OES_standard_derivatives');
 
