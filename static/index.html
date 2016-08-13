@@ -129,6 +129,16 @@ void main( void ) {
 		</script>
 
 		<script>
+			var keys = [];
+
+			window.addEventListener("keydown", function(e) {
+				keys[e.keyCode] = true;
+			}, false);
+
+			window.addEventListener('keyup', function(e) {
+					keys[e.keyCode] = false;
+			}, false);
+
 
 			initialize_helper();
 
@@ -301,6 +311,8 @@ void main( void ) {
 					
 					// enable dFdx, dFdy, fwidth
 					gl.getExtension('OES_standard_derivatives');
+					gl.getExtension( 'OES_texture_float' );
+					gl.getExtension( 'OES_texture_float_linear');
 
 					// Create vertex buffer (2 triangles)
 
@@ -620,6 +632,7 @@ void main( void ) {
 				cacheUniformLocation( program, 'resolution' );
 				cacheUniformLocation( program, 'backbuffer' );
 				cacheUniformLocation( program, 'surfaceSize' );
+				cacheUniformLocation( program, 'keyboard' );
 
 				// Load program into GPU
 
@@ -699,13 +712,13 @@ void main( void ) {
 				// set up framebuffer
 
 				gl.bindTexture( gl.TEXTURE_2D, target.texture );
-				gl.texImage2D( gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null );
+				gl.texImage2D( gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.FLOAT, null );
 
 				gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE );
 				gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE );
 
-				gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST );
-				gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST );
+				gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR );
+				gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR );
 
 				gl.bindFramebuffer( gl.FRAMEBUFFER, target.framebuffer );
 				gl.framebufferTexture2D( gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, target.texture, 0 );
@@ -868,8 +881,27 @@ void main( void ) {
 
 			}
 
-			function render() {
+			function createKeyboardTexture() {
+				var keyboardData = new Uint8Array(256*4);
+				var texture = gl.createTexture();
 
+				for(var i = 0; i < 256; i++) {
+					var c = keys[i] ? 255 : 0;
+					for(var j = 0; j < 4; j++) keyboardData[i*4 + j] = c;
+				}
+
+				gl.bindTexture(gl.TEXTURE_2D, texture);
+				gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 256, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, keyboardData);
+				gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+				gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+				gl.bindTexture(gl.TEXTURE_2D, null);
+
+				return texture;
+			}
+
+
+			function render() {
+				var keyboardTexture = createKeyboardTexture();
 				if ( !currentProgram ) return;
 
 				parameters.time = Date.now() - parameters.startTime;
@@ -882,6 +914,7 @@ void main( void ) {
 				gl.uniform2f( currentProgram.uniformsCache[ 'mouse' ], parameters.mouseX, parameters.mouseY );
 				gl.uniform2f( currentProgram.uniformsCache[ 'resolution' ], parameters.screenWidth, parameters.screenHeight );
 				gl.uniform1i( currentProgram.uniformsCache[ 'backbuffer' ], 0 );
+				gl.uniform1i( currentProgram.uniformsCache[ 'keyboard'], 2);
 				gl.uniform2f( currentProgram.uniformsCache[ 'surfaceSize' ], surface.width, surface.height );
 
 				gl.bindBuffer( gl.ARRAY_BUFFER, surface.buffer );
@@ -892,6 +925,10 @@ void main( void ) {
 
 				gl.activeTexture( gl.TEXTURE0 );
 				gl.bindTexture( gl.TEXTURE_2D, backTarget.texture );
+
+				gl.activeTexture(gl.TEXTURE2);
+				gl.bindTexture(gl.TEXTURE_2D, keyboardTexture);
+
 
 				// Render custom shader to front buffer
 
@@ -913,6 +950,7 @@ void main( void ) {
 				gl.activeTexture( gl.TEXTURE1 );
 				gl.bindTexture( gl.TEXTURE_2D, frontTarget.texture );
 
+				
 				// Render front buffer to screen
 
 				gl.bindFramebuffer( gl.FRAMEBUFFER, null );
