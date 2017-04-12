@@ -63,13 +63,14 @@
 		<script src="js/codemirror.js"></script>
 		<script src="js/glsl.js"></script>
 
-		<script id="example" type="x-shader/x-fragment">precision mediump float;
-
-#extension GL_OES_standard_derivatives : enable
+		<script id="example" type="x-shader/x-fragment">#version 300 es
+precision mediump float;
 
 uniform float time;
 uniform vec2 mouse;
 uniform vec2 resolution;
+
+out vec4 fragColor;
 
 void main( void ) {
 
@@ -81,29 +82,32 @@ void main( void ) {
 	color += sin( position.x * sin( time / 5.0 ) * 10.0 ) + sin( position.y * sin( time / 35.0 ) * 80.0 );
 	color *= sin( time / 10.0 ) * 0.5;
 
-	gl_FragColor = vec4( vec3( color, color * 0.5, sin( color + time / 3.0 ) * 0.75 ), 1.0 );
+	fragColor = vec4( vec3( color, color * 0.5, sin( color + time / 3.0 ) * 0.75 ), 1.0 );
 
-}</script>
+}
+		</script>
 
-		<script id="fragmentShader" type="x-shader/x-fragment">
+		<script id="fragmentShader" type="x-shader/x-fragment">#version 300 es
 
 			precision mediump float;
 
 			uniform vec2 resolution;
-			uniform sampler2D texture;
+			uniform sampler2D tex;
+
+			out vec4 fragColor;
 
 			void main() {
 
 				vec2 uv = gl_FragCoord.xy / resolution.xy;
-				gl_FragColor = texture2D( texture, uv );
+				fragColor = texture( tex, uv );
 
 			}
 
 		</script>
 
-		<script id="vertexShader" type="x-shader/x-vertex">
+		<script id="vertexShader" type="x-shader/x-vertex">#version 300 es
 
-			attribute vec3 position;
+			in vec3 position;
 
 			void main() {
 
@@ -113,11 +117,11 @@ void main( void ) {
 
 		</script>
 
-		<script id="surfaceVertexShader" type="x-shader/x-vertex">
+		<script id="surfaceVertexShader" type="x-shader/x-vertex">#version 300 es
 
-			attribute vec3 position;
-			attribute vec2 surfacePosAttrib;
-			varying vec2 surfacePosition;
+			in vec3 position;
+			in vec2 surfacePosAttrib;
+			out vec2 surfacePosition;
 
 			void main() {
 
@@ -286,19 +290,22 @@ void main( void ) {
 				add_server_buttons();
 
 				// Initialise WebGL
+				var contextAttributes = { preserveDrawingBuffer: true };
 
 				try {
 
-					gl = canvas.getContext( 'experimental-webgl', { preserveDrawingBuffer: true } );
+					gl  = canvas.getContext( 'webgl2', contextAttributes )
+					   || canvas.getContext( 'webgl', contextAttributes )
+					   || canvas.getContext( 'experimental-webgl', contextAttributes );
 
-				} catch( error ) { }
+				} catch ( error ) { }
 
 				if ( !gl ) {
 
 					alert("WebGL not supported, but code will be shown.");
 
 				} else {
-					
+
 					// enable dFdx, dFdy, fwidth
 					gl.getExtension('OES_standard_derivatives');
 
@@ -351,7 +358,7 @@ void main( void ) {
 						event.preventDefault();
 					}
 				}, false );
-				
+
 				if (gl) {
 
 					var surfaceMouseDown = function ( event ) {
@@ -387,7 +394,7 @@ void main( void ) {
 					canvas.addEventListener( 'contextmenu', noContextMenu, false);
 					panButton.addEventListener( 'contextmenu', noContextMenu, false);
 				}
-				
+
 				var clientXLast, clientYLast;
 
 				document.addEventListener( 'mousemove', function ( event ) {
@@ -404,10 +411,10 @@ void main( void ) {
 					stopHideUI();
 
 					var codeElement, dx, dy;
-					
+
 					parameters.mouseX = clientX / window.innerWidth;
 					parameters.mouseY = 1 - clientY / window.innerHeight;
-						
+
 					if (resizer.isResizing) {
 
 						resizer.currentWidth = Math.max(Math.min(clientX - resizer.offsetMouseX, resizer.maxWidth), resizer.minWidth);
@@ -517,9 +524,9 @@ void main( void ) {
 				if (gl) {
 
 					surface.width = surface.height * parameters.screenWidth / parameters.screenHeight;
-					
+
 					var halfWidth = surface.width * 0.5, halfHeight = surface.height * 0.5;
-					
+
 					gl.bindBuffer( gl.ARRAY_BUFFER, surface.buffer );
 					gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( [
 						surface.centerX - halfWidth, surface.centerY - halfHeight,
@@ -542,11 +549,11 @@ void main( void ) {
 			}
 
 			function compile() {
-			
+
 				if (!gl) {
-				
+
 					if (!getWebGL) {
-					
+
 						getWebGL = true;
 						compileButton.addEventListener( 'click', function ( event ) {
 
@@ -557,10 +564,10 @@ void main( void ) {
 						compileButton.style.color = '#ff0000';
 						compileButton.textContent = 'WebGL not supported!';
 						set_save_button('hidden');
-						
+
 					}
 					return;
-					
+
 				}
 
 				var program = gl.createProgram();
@@ -636,7 +643,7 @@ void main( void ) {
 			}
 
 			function compileScreenProgram() {
-			
+
 				if (!gl) { return; }
 
 				var program = gl.createProgram();
@@ -740,7 +747,7 @@ void main( void ) {
 
 
 			//
-			
+
 			function htmlEncode(str){
 
 				return String(str)
@@ -755,7 +762,7 @@ void main( void ) {
 			//
 
 			function createShader( src, type ) {
-			
+
 				var shader = gl.createShader( type );
 				var line, lineNum, lineError, index = 0, indexEnd;
 
@@ -773,7 +780,7 @@ void main( void ) {
 				if ( !gl.getShaderParameter( shader, gl.COMPILE_STATUS ) ) {
 
 					var error = gl.getShaderInfoLog( shader );
-					
+
 					// Remove trailing linefeed, for FireFox's benefit.
 					while ((error.length > 1) && (error.charCodeAt(error.length - 1) < 32)) {
 						error = error.substring(0, error.length - 1);
@@ -851,11 +858,11 @@ void main( void ) {
 				computeSurfaceCorners();
 
 				if (gl) {
-				
+
 					gl.viewport( 0, 0, canvas.width, canvas.height );
 
 					createRenderTargets();
-					
+
 				}
 			}
 
@@ -886,7 +893,7 @@ void main( void ) {
 
 				gl.bindBuffer( gl.ARRAY_BUFFER, surface.buffer );
 				gl.vertexAttribPointer( surface.positionAttribute, 2, gl.FLOAT, false, 0, 0 );
-				
+
 				gl.bindBuffer( gl.ARRAY_BUFFER, buffer );
 				gl.vertexAttribPointer( vertexPosition, 2, gl.FLOAT, false, 0, 0 );
 
@@ -909,7 +916,7 @@ void main( void ) {
 
 				gl.bindBuffer( gl.ARRAY_BUFFER, buffer );
 				gl.vertexAttribPointer( screenVertexPosition, 2, gl.FLOAT, false, 0, 0 );
-				
+
 				gl.activeTexture( gl.TEXTURE1 );
 				gl.bindTexture( gl.TEXTURE_2D, frontTarget.texture );
 
