@@ -253,6 +253,15 @@ void main( void ) {
 				}, false );
 				toolbar.appendChild( button );
 
+				var resetButton = document.createElement( 'button' );
+				resetButton.textContent = 'reset time';
+				resetButton.addEventListener( 'click', function ( event ) {
+
+					parameters.startTime = Date.now();
+
+				}, false );
+				toolbar.appendChild( resetButton );
+
 				var select = document.createElement( 'select' );
 
 				for ( var i = 0; i < quality_levels.length; i ++ ) {
