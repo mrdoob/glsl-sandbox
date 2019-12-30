@@ -19,7 +19,7 @@ GEM
     mongo (1.12.5)
       bson (= 1.12.5)
     netrc (0.11.0)
-    rack (1.6.11)
+    rack (1.6.12)
     rack-protection (1.5.5)
       rack
     rest-client (2.0.0)
