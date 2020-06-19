@@ -57,11 +57,13 @@
 		<link rel="stylesheet" href="css/codemirror.css">
 		<link rel="stylesheet" href="css/default.css">
 
+		<script src="https://unpkg.com/meyda/dist/web/meyda.min.js"></script>
 		<script src="js/lzma.js"></script>
 		<script src='js/jquery.js'></script>
 		<script src='js/helpers.js'></script>
 		<script src="js/codemirror.js"></script>
 		<script src="js/glsl.js"></script>
+		<script src="js/audio.js"></script>
 
 		<script id="example" type="x-shader/x-fragment">precision mediump float;
 
@@ -70,6 +72,7 @@
 uniform float time;
 uniform vec2 mouse;
 uniform vec2 resolution;
+uniform vec3 audio;
 
 void main( void ) {
 
@@ -81,7 +84,7 @@ void main( void ) {
 	color += sin( position.x * sin( time / 5.0 ) * 10.0 ) + sin( position.y * sin( time / 35.0 ) * 80.0 );
 	color *= sin( time / 10.0 ) * 0.5;
 
-	gl_FragColor = vec4( vec3( color, color * 0.5, sin( color + time / 3.0 ) * 0.75 ), 1.0 );
+	gl_FragColor = vec4( audio + vec3( color, color * 0.5, sin( color + time / 3.0 ) * 0.75 ), 1.0 );
 
 }</script>
 
@@ -167,7 +170,7 @@ void main( void ) {
 			var code, canvas, gl, buffer, currentProgram, vertexPosition, screenVertexPosition, panButton,
 			parameters = { startTime: Date.now(), time: 0, mouseX: 0.5, mouseY: 0.5, screenWidth: 0, screenHeight: 0 },
 			surface = { centerX: 0, centerY: 0, width: 1, height: 1, isPanning: false, isZooming: false, lastX: 0, lastY: 0 },
-			frontTarget, backTarget, screenProgram, getWebGL, resizer = {}, compileOnChangeCode = true;
+			frontTarget, backTarget, screenProgram, getWebGL, resizer = {}, compileOnChangeCode = true, audio;
 
 			init();
 			if (gl) { animate(); }
@@ -464,6 +467,8 @@ void main( void ) {
 
 				compileScreenProgram();
 
+				audio = new Audio();
+
 			}
 
 			function isCodeVisible() {
@@ -615,6 +620,7 @@ void main( void ) {
 
 				// Cache uniforms
 
+				cacheUniformLocation( program, 'audio' );
 				cacheUniformLocation( program, 'time' );
 				cacheUniformLocation( program, 'mouse' );
 				cacheUniformLocation( program, 'resolution' );
@@ -873,11 +879,13 @@ void main( void ) {
 				if ( !currentProgram ) return;
 
 				parameters.time = Date.now() - parameters.startTime;
+				audio.tick();
 
 				// Set uniforms for custom shader
 
 				gl.useProgram( currentProgram );
 
+				gl.uniform3f( currentProgram.uniformsCache[ 'audio' ], audio.fft[0], audio.fft[1], audio.fft[2]);
 				gl.uniform1f( currentProgram.uniformsCache[ 'time' ], parameters.time / 1000 );
 				gl.uniform2f( currentProgram.uniformsCache[ 'mouse' ], parameters.mouseX, parameters.mouseY );
 				gl.uniform2f( currentProgram.uniformsCache[ 'resolution' ], parameters.screenWidth, parameters.screenHeight );
