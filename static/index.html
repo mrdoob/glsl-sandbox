@@ -165,9 +165,11 @@ void main( void ) {
 			var quality = 2, quality_levels = [ 0.5, 1, 2, 4, 8 ];
 			var toolbar, compileButton, fullscreenButton, compileTimer, errorLines = [];
 			var code, canvas, gl, buffer, currentProgram, vertexPosition, screenVertexPosition, panButton,
-			parameters = { startTime: Date.now(), time: 0, mouseX: 0.5, mouseY: 0.5, screenWidth: 0, screenHeight: 0 },
+			parameters = { startTime: Date.now(), time: 0, prevTime: 0, smoothedFrameTime: 0, mouseX: 0.5, mouseY: 0.5, screenWidth: 0, screenHeight: 0 },
 			surface = { centerX: 0, centerY: 0, width: 1, height: 1, isPanning: false, isZooming: false, lastX: 0, lastY: 0 },
 			frontTarget, backTarget, screenProgram, getWebGL, resizer = {}, compileOnChangeCode = true;
+			var frameTimes = [ 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20 ]; //as if 50fps at init
+			var fpsButton, fpsTimer = 0;
 
 			init();
 			if (gl) { animate(); }
@@ -197,6 +199,11 @@ void main( void ) {
 				var rightside = document.createElement( 'div' );
 				rightside.style.cssFloat = 'right';
 				toolbar.appendChild( rightside );
+
+				fpsButton = document.createElement( 'button' );
+				fpsButton.textContent = 'fps';
+				fpsButton.title = 'Average frames per second';
+				rightside.appendChild( fpsButton );
 
 				panButton = document.createElement( 'button' );
 				panButton.textContent = 'pan/zoom';
@@ -616,6 +623,8 @@ void main( void ) {
 				// Cache uniforms
 
 				cacheUniformLocation( program, 'time' );
+				cacheUniformLocation( program, 'dtime' );
+				cacheUniformLocation( program, 'sdtime' );
 				cacheUniformLocation( program, 'mouse' );
 				cacheUniformLocation( program, 'resolution' );
 				cacheUniformLocation( program, 'backbuffer' );
@@ -872,13 +881,37 @@ void main( void ) {
 
 				if ( !currentProgram ) return;
 
+				var dt = parameters.time - parameters.prevTime;
+				parameters.prevTime = parameters.time;
 				parameters.time = Date.now() - parameters.startTime;
+				parameters.smoothedFrameTime = 0;
+				for ( var i = 0; i < frameTimes.length; i ++ )
+				{
+					if ( i == frameTimes.length - 1 )
+					{
+						frameTimes[ i ] = dt;
+					} else {
+						frameTimes[ i ] = frameTimes[ i + 1 ];
+					}
+					parameters.smoothedFrameTime += frameTimes[ i ];
+				}
+				parameters.smoothedFrameTime /= frameTimes.length;
+
+				fpsTimer += dt;
+				if ( fpsTimer > 1000 )
+				{
+					fpsTimer -= 1000;
+					var f = 1.0 / ( parameters.smoothedFrameTime / 1000 );
+					fpsButton.textContent = f.toFixed(0) + ' fps';
+				}
 
 				// Set uniforms for custom shader
 
 				gl.useProgram( currentProgram );
 
 				gl.uniform1f( currentProgram.uniformsCache[ 'time' ], parameters.time / 1000 );
+				gl.uniform1f( currentProgram.uniformsCache[ 'dtime' ], dt / 1000 );
+				gl.uniform1f( currentProgram.uniformsCache[ 'sdtime' ], parameters.smoothedFrameTime / 1000 );
 				gl.uniform2f( currentProgram.uniformsCache[ 'mouse' ], parameters.mouseX, parameters.mouseY );
 				gl.uniform2f( currentProgram.uniformsCache[ 'resolution' ], parameters.screenWidth, parameters.screenHeight );
 				gl.uniform1i( currentProgram.uniformsCache[ 'backbuffer' ], 0 );
