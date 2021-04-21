@@ -14,8 +14,8 @@ var (
 type Effect struct {
 	ID            int
 	CreatedAt     time.Time
-	ImageURL      string
 	ModifiedAt    time.Time
+	ImageURL      string
 	Parent        int
 	ParentVersion int
 	User          string
@@ -120,19 +120,26 @@ func (m *Memory) Get(id int) (Effect, error) {
 	return e, nil
 }
 
+type idModified struct {
+	id       int
+	modified time.Time
+}
+
 func (m *Memory) Page(num int, size int, hidden bool) ([]Effect, error) {
 	m.m.RLock()
 	defer m.m.RUnlock()
 
-	ids := make([]int, 0, len(m.Effects))
+	ids := make([]idModified, 0, len(m.Effects))
 	for i, e := range m.Effects {
-		if e.Hidden {
+		if !hidden && e.Hidden {
 			continue
 		}
-		ids = append(ids, i)
+		ids = append(ids, idModified{id: i, modified: e.ModifiedAt})
 	}
 
-	sort.Ints(ids)
+	sort.Slice(ids, func(a, b int) bool {
+		return ids[a].modified.Before(ids[b].modified)
+	})
 
 	start := num * size
 	if start >= len(ids) {
@@ -145,7 +152,7 @@ func (m *Memory) Page(num int, size int, hidden bool) ([]Effect, error) {
 
 	effects := make([]Effect, 0, end-start)
 	for _, i := range ids {
-		effects = append(effects, m.Effects[i])
+		effects = append(effects, m.Effects[i.id])
 	}
 
 	return effects, nil
