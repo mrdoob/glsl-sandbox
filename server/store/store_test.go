@@ -8,19 +8,36 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestImport(t *testing.T) {
-	effects, err := NewMemory()
-	require.NoError(t, err)
+type helper struct {
+	name string
+	test func(t *testing.T, s Store)
+}
 
+var tests = []helper{
+	{"import", testImport},
+	{"hidden", testHidden},
+}
+
+func TestMemory(t *testing.T) {
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			s, err := NewMemory()
+			require.NoError(t, err)
+			test.test(t, s)
+		})
+	}
+}
+
+func testImport(t *testing.T, s Store) {
 	buf := bytes.NewBufferString(importData)
-	err = Import(buf, effects)
+	err := Import(buf, s)
 	require.NoError(t, err)
 
-	es, err := effects.Page(1, 10, false)
+	es, err := s.Page(1, 10, false)
 	require.NoError(t, err)
 	require.Len(t, es, 0)
 
-	es, err = effects.Page(0, 10, false)
+	es, err = s.Page(0, 10, false)
 	require.NoError(t, err)
 	require.Len(t, es, 4)
 
@@ -40,21 +57,18 @@ func TestImport(t *testing.T) {
 	}
 }
 
-func TestHidden(t *testing.T) {
-	effects, err := NewMemory()
-	require.NoError(t, err)
-
+func testHidden(t *testing.T, s Store) {
 	for _, e := range testEffects {
-		err = effects.AddEffect(e)
+		err := s.AddEffect(e)
 		require.NoError(t, err)
 	}
 
-	es, err := effects.Page(0, 10, false)
+	es, err := s.Page(0, 10, false)
 	require.NoError(t, err)
 	require.Len(t, es, 1)
 	require.Equal(t, 1, es[0].ID)
 
-	es, err = effects.Page(0, 10, true)
+	es, err = s.Page(0, 10, true)
 	require.NoError(t, err)
 	require.Len(t, es, 2)
 	require.Equal(t, 2, es[0].ID)
