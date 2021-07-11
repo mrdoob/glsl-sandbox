@@ -126,6 +126,24 @@ INSERT INTO effects (
 )
 `
 
+	sqlInsertEffect = `
+INSERT INTO effects (
+	created_at,
+	modified_at,
+	parent,
+	parent_version,
+	user,
+	hidden
+) VALUES(
+	:created_at,
+	:modified_at,
+	:parent,
+	:parent_version,
+	:user,
+	:hidden
+)
+`
+
 	sqlInsertVersion = `
 INSERT INTO versions (
 	version,
@@ -158,6 +176,28 @@ SELECT * FROM versions
 	WHERE effect = ?
 	ORDER BY version
 `
+
+	sqlSelectEffect = `
+SELECT * FROM effects
+	WHERE id = ?
+`
+
+	sqlSelectMaxVersion = `
+SELECT MAX(version) FROM versions
+	WHERE effect = ?
+`
+
+	sqlUpdateEffectModification = `
+UPDATE effects
+	SET modified_at = ?
+	WHERE id = ?
+`
+
+	sqlUpdateEffectHide = `
+UPDATE effects
+	SET hidden = ?
+	WHERE id = ?
+`
 )
 
 func (s *Sqlite) AddEffect(e Effect) error {
@@ -172,8 +212,6 @@ func (s *Sqlite) AddEffect(e Effect) error {
 		version.Version = i
 		version.Effect = effect.ID
 
-		println(version.Effect, version.Version)
-
 		_, err := s.db.NamedExec(sqlInsertVersion, version)
 		if err != nil {
 			return fmt.Errorf("could not insert version: %w", err)
@@ -183,12 +221,72 @@ func (s *Sqlite) AddEffect(e Effect) error {
 	return nil
 }
 
-func (s *Sqlite) Add(parent int, parentVersion int, user string, version string) (int, error) {
-	panic("not implemented") // TODO: Implement
+func (s *Sqlite) Add(
+	parent int, parentVersion int, user string, version string,
+) (int, error) {
+	t := time.Now()
+	e := sqliteEffect{
+		CreatedAt:     t,
+		ModifiedAt:    t,
+		Parent:        parent,
+		ParentVersion: parentVersion,
+		User:          user,
+	}
+
+	r, err := s.db.NamedExec(sqlInsertEffect, e)
+	if err != nil {
+		return -1, fmt.Errorf("could not insert effect: %w", err)
+	}
+
+	id, err := r.LastInsertId()
+	if err != nil {
+		return -1, fmt.Errorf("could not get effect id: %w", err)
+	}
+
+	v := sqliteVersion{
+		Version:   0,
+		Effect:    int(id),
+		CreatedAt: t,
+		Code:      version,
+	}
+	_, err = s.db.NamedExec(sqlInsertVersion, v)
+	if err != nil {
+		return int(id), fmt.Errorf("could not insert version: %w", err)
+	}
+
+	return int(id), nil
 }
 
 func (s *Sqlite) AddVersion(id int, code string) (int, error) {
-	panic("not implemented") // TODO: Implement
+	t := time.Now()
+	var maxVersion *int
+	r := s.db.QueryRowx(sqlSelectMaxVersion, id)
+	err := r.Scan(&maxVersion)
+	if err != nil {
+		return -1, fmt.Errorf("could not get max version: %w", err)
+	}
+
+	if maxVersion == nil {
+		return -1, ErrNotFound
+	}
+
+	version := sqliteVersion{
+		Version:   *maxVersion + 1,
+		Effect:    id,
+		CreatedAt: t,
+		Code:      code,
+	}
+	_, err = s.db.NamedExec(sqlInsertVersion, version)
+	if err != nil {
+		return -1, fmt.Errorf("could not insert version: %w", err)
+	}
+
+	_, err = s.db.Exec(sqlUpdateEffectModification, t, id)
+	if err != nil {
+		return -1, fmt.Errorf("could not update effect: %w", err)
+	}
+
+	return version.Version, nil
 }
 
 func (s *Sqlite) Page(num int, size int, hidden bool) ([]Effect, error) {
@@ -210,8 +308,6 @@ func (s *Sqlite) Page(num int, size int, hidden bool) ([]Effect, error) {
 		if err != nil {
 			return nil, fmt.Errorf("could not retrieve effect: %w", err)
 		}
-
-		println("effect", e.ID, e.ModifiedAt.String())
 
 		effects = append(effects, sqliteToEffect(e))
 	}
@@ -249,11 +345,40 @@ func (s *Sqlite) versions(id int) ([]Version, error) {
 }
 
 func (s *Sqlite) Effect(id int) (Effect, error) {
-	panic("not implemented") // TODO: Implement
+	var e sqliteEffect
+	r := s.db.QueryRowx(sqlSelectEffect, id)
+	err := r.StructScan(&e)
+	if err != nil {
+		return Effect{}, fmt.Errorf("could not get effect: %w", err)
+	}
+
+	versions, err := s.versions(id)
+	if err != nil {
+		return Effect{}, err
+	}
+
+	effect := sqliteToEffect(e)
+	effect.Versions = versions
+
+	return effect, nil
 }
 
 func (s *Sqlite) Hide(id int, hidden bool) error {
-	panic("not implemented") // TODO: Implement
+	r, err := s.db.Exec(sqlUpdateEffectHide, hidden, id)
+	if err != nil {
+		return fmt.Errorf("could not update effect: %w", err)
+	}
+
+	n, err := r.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("could not update effect: %w", err)
+
+	}
+	if n < 1 {
+		return ErrNotFound
+	}
+
+	return nil
 }
 
 func sqliteToEffect(e sqliteEffect) Effect {

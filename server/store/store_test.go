@@ -95,17 +95,17 @@ func testHidden(t *testing.T, s Store) {
 func testAddVersion(t *testing.T, s Store) {
 	id, err := s.Add(10, 5, "user", "first")
 	require.NoError(t, err)
-	require.Equal(t, 0, id)
+	require.Equal(t, 1, id)
 
-	e, err := s.Effect(0)
+	e, err := s.Effect(1)
 	require.NoError(t, err)
-	require.Equal(t, 0, e.ID)
+	require.Equal(t, 1, e.ID)
 	require.Equal(t, false, e.Hidden)
 	require.True(t, e.CreatedAt.Before(time.Now()))
 	require.False(t, e.CreatedAt.IsZero())
 	require.True(t, e.ModifiedAt.Before(time.Now()))
 	require.False(t, e.ModifiedAt.IsZero())
-	require.Equal(t, "0.png", e.ImageName())
+	require.Equal(t, "1.png", e.ImageName())
 	require.Equal(t, 10, e.Parent)
 	require.Equal(t, 5, e.ParentVersion)
 	require.Equal(t, "user", e.User)
@@ -116,18 +116,18 @@ func testAddVersion(t *testing.T, s Store) {
 	require.True(t, v.CreatedAt.Before(time.Now()))
 	require.False(t, v.CreatedAt.IsZero())
 
-	vid, err := s.AddVersion(0, "second")
+	vid, err := s.AddVersion(1, "second")
 	require.NoError(t, err)
 	require.Equal(t, 1, vid)
 
 	ti := e.ModifiedAt
-	e, err = s.Effect(0)
+	e, err = s.Effect(1)
 	require.NoError(t, err)
 	require.True(t, ti.Before(e.ModifiedAt))
 	require.Len(t, e.Versions, 2)
 	require.Equal(t, "second", e.Versions[1].Code)
 
-	_, err = s.AddVersion(1, "invalid")
+	_, err = s.AddVersion(2, "invalid")
 	require.Error(t, err)
 	require.Equal(t, err, ErrNotFound)
 }
@@ -135,25 +135,25 @@ func testAddVersion(t *testing.T, s Store) {
 func testHide(t *testing.T, s Store) {
 	id, err := s.Add(10, 5, "user", "first")
 	require.NoError(t, err)
-	require.Equal(t, 0, id)
+	require.Equal(t, 1, id)
 
-	e, err := s.Effect(0)
-	require.NoError(t, err)
-	require.False(t, e.Hidden)
-
-	err = s.Hide(0, true)
-	require.NoError(t, err)
-	e, err = s.Effect(0)
-	require.NoError(t, err)
-	require.True(t, e.Hidden)
-
-	err = s.Hide(0, false)
-	require.NoError(t, err)
-	e, err = s.Effect(0)
+	e, err := s.Effect(1)
 	require.NoError(t, err)
 	require.False(t, e.Hidden)
 
 	err = s.Hide(1, true)
+	require.NoError(t, err)
+	e, err = s.Effect(1)
+	require.NoError(t, err)
+	require.True(t, e.Hidden)
+
+	err = s.Hide(1, false)
+	require.NoError(t, err)
+	e, err = s.Effect(1)
+	require.NoError(t, err)
+	require.False(t, e.Hidden)
+
+	err = s.Hide(2, true)
 	require.Error(t, err)
 	require.Equal(t, ErrNotFound, err)
 }

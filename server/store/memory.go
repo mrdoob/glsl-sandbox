@@ -17,7 +17,7 @@ type Memory struct {
 func NewMemory() (*Memory, error) {
 	return &Memory{
 		Effects: make(map[int]Effect),
-		last:    0,
+		last:    1,
 	}, nil
 }
 
