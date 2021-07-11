@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"encoding/json"
 	"io"
-	"strings"
 	"time"
 )
 
@@ -38,16 +37,9 @@ func (j JSONDate) Time() time.Time {
 
 // Convert a BSON struct into Effect.
 func Convert(j JSONEffect) Effect {
-	p := strings.Split(j.ImageURL, "/")
-	image := ""
-	if len(p) > 0 {
-		image = p[len(p)-1]
-	}
-
 	e := Effect{
 		ID:            j.ID,
 		CreatedAt:     j.CreatedAt.Time(),
-		ImageURL:      image,
 		ModifiedAt:    j.ModifiedAt.Time(),
 		Parent:        j.Parent,
 		ParentVersion: j.ParentVersion,

@@ -13,12 +13,15 @@ type Effect struct {
 	ID            int
 	CreatedAt     time.Time
 	ModifiedAt    time.Time
-	ImageURL      string
 	Parent        int
 	ParentVersion int
 	User          string
 	Hidden        bool
 	Versions      []Version
+}
+
+func (e Effect) ImageName() string {
+	return fmt.Sprintf("%d.png", e.ID)
 }
 
 type Version struct {
