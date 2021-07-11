@@ -28,10 +28,9 @@ type Version struct {
 
 type Store interface {
 	AddEffect(e Effect) error
-	Add(parent int, parentVersion int, imageURL string, user string,
-		version string,
-	) (int, error)
+	Add(parent int, parentVersion int, user string, version string) (int, error)
 	AddVersion(id int, code string) (int, error)
 	Page(num int, size int, hidden bool) ([]Effect, error)
 	Effect(id int) (Effect, error)
+	Hide(id int, hidden bool) error
 }
