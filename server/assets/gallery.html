@@ -1,3 +1,4 @@
+{{ define "gallery" }}
 <!DOCTYPE html>
 <html lang="en">
 	<head>
@@ -81,26 +82,27 @@ gallery by <a href="http://twitter.com/thevaw">@thevaw</a> and <a href="http://t
 
 <div id="gallery">
 
-<% effects.each do |effect| %>
-	<a href='/e#<%= effect['_id'] %>.<%= effect['versions'].length-1 %>'><img src='<%= image(effect) %>'></a>
-<% end %>
+{{ range .Effects }}
+	<a href='/e#{{ .ID }}.{{ .Version }}'><img src='{{ .Image }}'></a>
+{{ end }}
 
 </div>
 
 <div id="paginate">
-<% if previous_page %>
-<a href='/?page=<%= previous_page %>'>Previous page</a>
+{{ if .IsPrevious }}
+<a href='/?page={{ .PreviousPage }}'>Previous page</a>
 
-<% if next_page %>
+{{ if .IsNext }}
 &nbsp;&nbsp;
-<% end %>
+{{ end }}
 
-<% end %>
+{{ end }}
 
-<% if next_page %>
-<a href='/?page=<%= next_page %>'>Next page</a>
-<% end %>
+{{ if .IsNext }}
+<a href='/?page={{ .NextPage }}'>Next page</a>
+{{ end }}
 </div>
 
 </body>
 </html>
+{{ end }}

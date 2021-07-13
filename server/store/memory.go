@@ -128,8 +128,8 @@ func (m *Memory) Page(num int, size int, hidden bool) ([]Effect, error) {
 		end = len(ids)
 	}
 
-	effects := make([]Effect, 0, end-start)
-	for _, i := range ids {
+	effects := make([]Effect, 0, size)
+	for _, i := range ids[start:end] {
 		effects = append(effects, m.Effects[i.id])
 	}
 
