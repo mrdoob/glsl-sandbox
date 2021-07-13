@@ -1,13 +1,17 @@
 package server
 
 import (
+	"encoding/json"
+	"fmt"
 	"html/template"
 	"io"
 	"net/http"
 	"path"
 	"strconv"
+	"strings"
 
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 	"github.com/labstack/gommon/log"
 	"github.com/mrdoob/glsl-sandbox/server/store"
 )
@@ -65,12 +69,18 @@ func (s *Server) Start() error {
 func (s *Server) setup() {
 	s.echo.Renderer = s.template
 	s.echo.Logger.SetLevel(log.DEBUG)
+	s.echo.Use(middleware.Logger())
 	s.routes()
 }
 
 func (s *Server) routes() {
 	s.echo.GET("/", s.indexHandler)
+	s.echo.GET("/e", s.effectHandler)
+	s.echo.GET("/item/:id", s.itemHandler)
+
 	s.echo.Static("/thumbs", "./data/thumbs")
+	s.echo.Static("/css", "./server/assets/css")
+	s.echo.Static("/js", "./server/assets/js")
 }
 
 func (s *Server) indexHandler(c echo.Context) error {
@@ -113,4 +123,67 @@ func (s *Server) indexHandler(c echo.Context) error {
 	return err
 	// return c.File("./server/assets/gallery.html")
 	// return c.String(http.StatusOK, "index")
+}
+
+func (s *Server) effectHandler(c echo.Context) error {
+	return c.File("./static/index.html")
+}
+
+type itemResponse struct {
+	Code   string `json:"code"`
+	User   string `json:"user"`
+	Parent string `json:"parent,omitempty"`
+}
+
+func (s *Server) itemHandler(c echo.Context) error {
+	param := c.Param("id")
+	var idString, versionString string
+
+	parts := strings.Split(param, ".")
+	switch len(parts) {
+	case 1:
+		idString = parts[0]
+	case 2:
+		idString = parts[0]
+		versionString = parts[1]
+	default:
+		return c.String(http.StatusBadRequest, "{}")
+	}
+
+	id, err := strconv.Atoi(idString)
+	if err != nil {
+		return c.String(http.StatusBadRequest, "{}")
+	}
+
+	version, err := strconv.Atoi(versionString)
+	if err != nil {
+		return c.String(http.StatusBadRequest, "{}")
+	}
+
+	effect, err := s.store.Effect(id)
+	if err != nil {
+		return c.String(http.StatusBadRequest, "{}")
+	}
+
+	if version >= len(effect.Versions) || version < 0 {
+		return c.String(http.StatusNotFound, "{}")
+	}
+
+	parent := ""
+	if effect.Parent > 0 {
+		parent = fmt.Sprintf("/e#%d.%d", effect.Parent, effect.ParentVersion)
+	}
+
+	item := itemResponse{
+		Code:   effect.Versions[version].Code,
+		User:   effect.User,
+		Parent: parent,
+	}
+
+	data, err := json.Marshal(item)
+	if err != nil {
+		return c.String(http.StatusInternalServerError, "{}")
+	}
+
+	return c.Blob(http.StatusOK, "application/json", data)
 }
