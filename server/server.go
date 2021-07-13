@@ -1,11 +1,13 @@
 package server
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"html/template"
 	"io"
 	"net/http"
+	"os"
 	"path"
 	"strconv"
 	"strings"
@@ -18,7 +20,12 @@ import (
 
 const (
 	pathGallery = "./server/assets/gallery.html"
+	pathThumbs  = "./data/thumbs"
 	perPage     = 50
+)
+
+var (
+	ErrInvalidData = fmt.Errorf("invalid data")
 )
 
 type Template struct {
@@ -76,6 +83,7 @@ func (s *Server) setup() {
 func (s *Server) routes() {
 	s.echo.GET("/", s.indexHandler)
 	s.echo.GET("/e", s.effectHandler)
+	s.echo.POST("/e", s.saveHandler)
 	s.echo.GET("/item/:id", s.itemHandler)
 
 	s.echo.Static("/thumbs", "./data/thumbs")
@@ -121,8 +129,6 @@ func (s *Server) indexHandler(c echo.Context) error {
 		panic(err)
 	}
 	return err
-	// return c.File("./server/assets/gallery.html")
-	// return c.String(http.StatusOK, "index")
 }
 
 func (s *Server) effectHandler(c echo.Context) error {
@@ -137,25 +143,7 @@ type itemResponse struct {
 
 func (s *Server) itemHandler(c echo.Context) error {
 	param := c.Param("id")
-	var idString, versionString string
-
-	parts := strings.Split(param, ".")
-	switch len(parts) {
-	case 1:
-		idString = parts[0]
-	case 2:
-		idString = parts[0]
-		versionString = parts[1]
-	default:
-		return c.String(http.StatusBadRequest, "{}")
-	}
-
-	id, err := strconv.Atoi(idString)
-	if err != nil {
-		return c.String(http.StatusBadRequest, "{}")
-	}
-
-	version, err := strconv.Atoi(versionString)
+	id, version, err := idVersion(param)
 	if err != nil {
 		return c.String(http.StatusBadRequest, "{}")
 	}
@@ -186,4 +174,124 @@ func (s *Server) itemHandler(c echo.Context) error {
 	}
 
 	return c.Blob(http.StatusOK, "application/json", data)
+}
+
+type saveQuery struct {
+	Code   string `json:"Code"`
+	Image  string `json:"Image"`
+	User   string `json:"User"`
+	CodeID string `json:"CodeID"`
+	Parent string `json:"Parent"`
+}
+
+func (s *Server) saveHandler(c echo.Context) error {
+	if c.Request().Body == nil {
+		c.Logger().Errorf("empty body")
+		return c.String(http.StatusBadRequest, "")
+	}
+
+	data, err := io.ReadAll(c.Request().Body)
+	if err != nil {
+		c.Logger().Errorf("could not read body: %s", err.Error())
+		return c.String(http.StatusInternalServerError, "")
+	}
+
+	var save saveQuery
+	err = json.Unmarshal(data, &save)
+	if err != nil {
+		c.Logger().Errorf("could not parse json: %s", err.Error())
+		return c.String(http.StatusBadRequest, "")
+	}
+
+	parts := strings.Split(save.Image, ",")
+	if len(parts) != 2 {
+		c.Logger().Errorf("malformed encoded image")
+		return c.String(http.StatusBadRequest, "")
+	}
+	imgData := parts[1]
+
+	img, err := base64.StdEncoding.DecodeString(imgData)
+	if err != nil {
+		c.Logger().Errorf("could not decode image: %s", err.Error())
+		return c.String(http.StatusBadRequest, "")
+	}
+
+	var id, version int
+	if save.CodeID == "" {
+		parent, parentVersion, err := idVersion(save.Parent)
+		if err != nil {
+			parent, parentVersion = -1, -1
+		}
+
+		id, err = s.store.Add(parent, parentVersion, save.User, save.Code)
+		if err != nil {
+			c.Logger().Errorf("could not save new effect: %s", err.Error())
+			return c.String(http.StatusInternalServerError, "")
+		}
+	} else {
+		id, err = strconv.Atoi(save.CodeID)
+		if err != nil {
+			c.Logger().Errorf("malformed code id: %s", err.Error())
+			return c.String(http.StatusBadRequest, "")
+		}
+
+		version, err = s.store.AddVersion(id, save.Code)
+		if err != nil {
+			c.Logger().Errorf("could not save new version: %s", err.Error())
+			return c.String(http.StatusInternalServerError, "")
+		}
+	}
+
+	err = saveImage(id, img)
+	if err != nil {
+		c.Logger().Errorf("could not save image: %s", err.Error())
+		return c.String(http.StatusInternalServerError, "")
+	}
+
+	answer := fmt.Sprintf("%d.%d", id, version)
+	return c.String(http.StatusOK, answer)
+}
+
+func saveImage(id int, data []byte) error {
+	name := fmt.Sprintf("%d.png", id)
+	path := path.Join(pathThumbs, name)
+
+	f, err := os.Create(path)
+	if err != nil {
+		return fmt.Errorf("cannot create thumbnail: %w", err)
+	}
+	defer f.Close()
+
+	_, err = f.Write(data)
+	if err != nil {
+		return fmt.Errorf("cannot write thumbnail: %w", err)
+	}
+
+	return nil
+}
+
+func idVersion(param string) (int, int, error) {
+	var idString, versionString string
+	parts := strings.Split(strings.TrimPrefix(param, "#"), ".")
+	switch len(parts) {
+	case 1:
+		idString = parts[0]
+	case 2:
+		idString = parts[0]
+		versionString = parts[1]
+	default:
+		return 0, 0, ErrInvalidData
+	}
+
+	id, err := strconv.Atoi(idString)
+	if err != nil {
+		return 0, 0, ErrInvalidData
+	}
+
+	version, err := strconv.Atoi(versionString)
+	if err != nil {
+		return 0, 0, ErrInvalidData
+	}
+
+	return id, version, nil
 }
