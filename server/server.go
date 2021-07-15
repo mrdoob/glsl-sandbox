@@ -89,7 +89,7 @@ func (s *Server) routes() {
 	s.echo.POST("/e", s.saveHandler)
 	s.echo.GET("/item/:id", s.itemHandler)
 
-	s.echo.Static("/thumbs", "./data/thumbs")
+	s.echo.Static("/thumbs", filepath.Join(s.dataPath, "thumbs"))
 	s.echo.Static("/css", "./server/assets/css")
 	s.echo.Static("/js", "./server/assets/js")
 	s.echo.File("/diff", "./server/assets/diff.html")
