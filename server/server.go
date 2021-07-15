@@ -73,7 +73,7 @@ func New(s store.Store, dataPath string) *Server {
 
 func (s *Server) Start() error {
 	s.setup()
-	return s.echo.Start("localhost:8888")
+	return s.echo.Start(":8888")
 }
 
 func (s *Server) setup() {
