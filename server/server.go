@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -56,15 +57,17 @@ type Server struct {
 	echo     *echo.Echo
 	template *Template
 	store    store.Store
+	dataPath string
 }
 
-func New(s store.Store) *Server {
+func New(s store.Store, dataPath string) *Server {
 	return &Server{
 		echo: echo.New(),
 		template: &Template{
 			templates: template.Must(template.ParseFiles(pathGallery)),
 		},
-		store: s,
+		store:    s,
+		dataPath: dataPath,
 	}
 }
 
@@ -234,6 +237,7 @@ func (s *Server) saveHandler(c echo.Context) error {
 			c.Logger().Errorf("malformed code id: %s", err.Error())
 			return c.String(http.StatusBadRequest, "")
 		}
+
 		id, err = strconv.Atoi(parts[0])
 		if err != nil {
 			c.Logger().Errorf("malformed code id: %s", err.Error())
@@ -247,7 +251,7 @@ func (s *Server) saveHandler(c echo.Context) error {
 		}
 	}
 
-	err = saveImage(id, img)
+	err = saveImage(thumbPath(s.dataPath, id), img)
 	if err != nil {
 		c.Logger().Errorf("could not save image: %s", err.Error())
 		return c.String(http.StatusInternalServerError, "")
@@ -257,10 +261,11 @@ func (s *Server) saveHandler(c echo.Context) error {
 	return c.String(http.StatusOK, answer)
 }
 
-func saveImage(id int, data []byte) error {
-	name := fmt.Sprintf("%d.png", id)
-	path := path.Join(pathThumbs, name)
+func thumbPath(dataPath string, id int) string {
+	return filepath.Join(dataPath, "thumbs", fmt.Sprintf("%d.png", id))
+}
 
+func saveImage(path string, data []byte) error {
 	f, err := os.Create(path)
 	if err != nil {
 		return fmt.Errorf("cannot create thumbnail: %w", err)
