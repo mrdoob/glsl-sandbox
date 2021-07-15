@@ -89,6 +89,7 @@ func (s *Server) routes() {
 	s.echo.Static("/thumbs", "./data/thumbs")
 	s.echo.Static("/css", "./server/assets/css")
 	s.echo.Static("/js", "./server/assets/js")
+	s.echo.File("/diff", "./server/assets/diff.html")
 }
 
 func (s *Server) indexHandler(c echo.Context) error {
@@ -115,7 +116,6 @@ func (s *Server) indexHandler(c echo.Context) error {
 		}
 	}
 
-	println(page, len(effects), perPage)
 	d := galleryData{
 		Effects:      effects,
 		IsNext:       len(effects) == perPage,
@@ -177,11 +177,11 @@ func (s *Server) itemHandler(c echo.Context) error {
 }
 
 type saveQuery struct {
-	Code   string `json:"Code"`
-	Image  string `json:"Image"`
-	User   string `json:"User"`
-	CodeID string `json:"CodeID"`
-	Parent string `json:"Parent"`
+	Code   string `json:"code"`
+	Image  string `json:"image"`
+	User   string `json:"user"`
+	CodeID string `json:"code_id"`
+	Parent string `json:"parent"`
 }
 
 func (s *Server) saveHandler(c echo.Context) error {
@@ -229,7 +229,12 @@ func (s *Server) saveHandler(c echo.Context) error {
 			return c.String(http.StatusInternalServerError, "")
 		}
 	} else {
-		id, err = strconv.Atoi(save.CodeID)
+		parts := strings.Split(save.CodeID, ".")
+		if len(parts) < 1 {
+			c.Logger().Errorf("malformed code id: %s", err.Error())
+			return c.String(http.StatusBadRequest, "")
+		}
+		id, err = strconv.Atoi(parts[0])
 		if err != nil {
 			c.Logger().Errorf("malformed code id: %s", err.Error())
 			return c.String(http.StatusBadRequest, "")
