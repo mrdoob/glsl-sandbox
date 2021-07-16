@@ -36,21 +36,25 @@ type Template struct {
 func (t *Template) Render(
 	w io.Writer, name string, data interface{}, c echo.Context,
 ) error {
-	return t.templates.ExecuteTemplate(w, name, data)
-}
-
-type galleryEffect struct {
-	ID      int
-	Version int
-	Image   string
-}
-
-type galleryData struct {
-	Effects      []galleryEffect
-	IsPrevious   bool
-	PreviousPage int
-	IsNext       bool
-	NextPage     int
+	tpl := template.New("")
+	tpl = tpl.Funcs(template.FuncMap{
+		"checkboxID": func(id int) string {
+			return fmt.Sprintf("hidden_%d", id)
+		},
+		"checked": func(b bool) string {
+			if b {
+				return "checked"
+			}
+			return ""
+		},
+	})
+	tpl, err := tpl.ParseFiles(pathGallery)
+	if err != nil {
+		fmt.Println("template error", err.Error())
+		return err
+	}
+	return tpl.ExecuteTemplate(w, name, data)
+	// return t.templates.ExecuteTemplate(w, name, data)
 }
 
 type Server struct {
@@ -61,10 +65,24 @@ type Server struct {
 }
 
 func New(s store.Store, dataPath string) *Server {
+	t := template.New("")
+	t = t.Funcs(template.FuncMap{
+		"checkboxID": func(id int) string {
+			return fmt.Sprintf("hidden_%d", id)
+		},
+		"checked": func(b bool) string {
+			if b {
+				return "checked"
+			}
+			return ""
+		},
+	})
+	t = template.Must(t.ParseFiles(pathGallery))
+
 	return &Server{
 		echo: echo.New(),
 		template: &Template{
-			templates: template.Must(template.ParseFiles(pathGallery)),
+			templates: t,
 		},
 		store:    s,
 		dataPath: dataPath,
@@ -88,6 +106,8 @@ func (s *Server) routes() {
 	s.echo.GET("/e", s.effectHandler)
 	s.echo.POST("/e", s.saveHandler)
 	s.echo.GET("/item/:id", s.itemHandler)
+	s.echo.GET("/admin", s.adminHandler)
+	s.echo.POST("/admin", s.adminPostHandler)
 
 	s.echo.Static("/thumbs", filepath.Join(s.dataPath, "thumbs"))
 	s.echo.Static("/css", "./server/assets/css")
@@ -96,6 +116,32 @@ func (s *Server) routes() {
 }
 
 func (s *Server) indexHandler(c echo.Context) error {
+	return s.indexRender(c, false)
+}
+
+func (s *Server) adminHandler(c echo.Context) error {
+	return s.indexRender(c, true)
+}
+
+type galleryEffect struct {
+	ID      int
+	Version int
+	Image   string
+	Hidden  bool
+}
+
+type galleryData struct {
+	Effects      []galleryEffect
+	URL          string
+	Page         int
+	IsPrevious   bool
+	PreviousPage int
+	IsNext       bool
+	NextPage     int
+	Admin        bool
+}
+
+func (s *Server) indexRender(c echo.Context, admin bool) error {
 	pString := c.QueryParam("page")
 	if pString == "" {
 		pString = "0"
@@ -105,7 +151,7 @@ func (s *Server) indexHandler(c echo.Context) error {
 		page = 0
 	}
 
-	p, err := s.store.Page(page, perPage, false)
+	p, err := s.store.Page(page, perPage, admin)
 	if err != nil {
 		return c.String(http.StatusInternalServerError, "error")
 	}
@@ -116,15 +162,23 @@ func (s *Server) indexHandler(c echo.Context) error {
 			ID:      e.ID,
 			Version: len(e.Versions) - 1,
 			Image:   path.Join("/thumbs", e.ImageName()),
+			Hidden:  e.Hidden,
 		}
 	}
 
+	url := "/"
+	if admin {
+		url = "/admin"
+	}
 	d := galleryData{
 		Effects:      effects,
+		URL:          url,
+		Page:         page,
 		IsNext:       len(effects) == perPage,
 		NextPage:     page + 1,
 		IsPrevious:   page > 0,
 		PreviousPage: page - 1,
+		Admin:        admin,
 	}
 
 	err = c.Render(http.StatusOK, "gallery", d)
@@ -259,6 +313,46 @@ func (s *Server) saveHandler(c echo.Context) error {
 
 	answer := fmt.Sprintf("%d.%d", id, version)
 	return c.String(http.StatusOK, answer)
+}
+
+func (s *Server) adminPostHandler(c echo.Context) error {
+	pageTxt := c.FormValue("page")
+	// TODO(jfontan): check error?
+	page, _ := strconv.Atoi(pageTxt)
+	url := fmt.Sprintf("/admin?page=%d", page)
+
+	values, err := c.FormParams()
+	if err != nil {
+		c.Logger().Errorf("malformed form: %s", err.Error())
+		return c.Redirect(http.StatusSeeOther, url)
+
+	}
+
+	for n, v := range values {
+		if !strings.HasPrefix(n, "hidden_") {
+			continue
+		}
+		if len(v) != 1 || v[0] != "on" {
+			continue
+		}
+
+		parts := strings.Split(n, "_")
+		if len(parts) != 2 {
+			continue
+		}
+
+		id, err := strconv.Atoi(parts[1])
+		if err != nil {
+			continue
+		}
+
+		err = s.store.Hide(id, true)
+		if err != nil {
+			c.Logger().Errorf("could not hide effect: %s", err.Error())
+		}
+	}
+
+	return c.Redirect(http.StatusSeeOther, url)
 }
 
 func thumbPath(dataPath string, id int) string {

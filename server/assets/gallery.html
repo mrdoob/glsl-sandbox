@@ -33,6 +33,8 @@
 				margin-top: 2em;
 			}
 			#gallery{
+				/* display: grid; */
+				width: 100%;
 				margin-top: 4em;
 			}
 			#gallery>a{
@@ -49,8 +51,11 @@
 				box-shadow: 0px 0px 24px 10px #263D65;
 				border: 1px solid #316FAE;
 			}
+			.effect {
+				float: left;
+			}
 			label{
-				display: block;
+				/* display: block; */
 				margin-top: 1.4em;
 				margin-bottom: 0.6em;
 				font-size: 14px;
@@ -82,15 +87,34 @@ gallery by <a href="http://twitter.com/thevaw">@thevaw</a> and <a href="http://t
 
 <div id="gallery">
 
+{{ if .Admin }}
+<form action="/admin" method="POST">
+	<input type="hidden" id="page" name="page" value="{{ .Page }}">
+{{ end }}
+
+{{ $admin := .Admin }}
+
 {{ range .Effects }}
-	<a href='/e#{{ .ID }}.{{ .Version }}'><img src='{{ .Image }}'></a>
+	<div class="effect">
+		<a href='/e#{{ .ID }}.{{ .Version }}'><img src='{{ .Image }}'></a>
+		{{ if $admin }}
+		{{ $name := checkboxID .ID }}
+		<label style="color:#009DE9" for="{{ $name }}">Hidden</label>
+		<input type="checkbox" id="{{ $name }}" name="{{ $name }}" {{ checked .Hidden }}>
+		{{ end }}
+	</div>
+{{ end }}
+
+{{ if .Admin }}
+	<input type="submit" value="Submit">
+</form>
 {{ end }}
 
 </div>
 
 <div id="paginate">
 {{ if .IsPrevious }}
-<a href='/?page={{ .PreviousPage }}'>Previous page</a>
+<a href='{{ .URL }}?page={{ .PreviousPage }}'>Previous page</a>
 
 {{ if .IsNext }}
 &nbsp;&nbsp;
@@ -99,7 +123,7 @@ gallery by <a href="http://twitter.com/thevaw">@thevaw</a> and <a href="http://t
 {{ end }}
 
 {{ if .IsNext }}
-<a href='/?page={{ .NextPage }}'>Next page</a>
+<a href='{{ .URL }}?page={{ .NextPage }}'>Next page</a>
 {{ end }}
 </div>
 
