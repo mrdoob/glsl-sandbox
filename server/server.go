@@ -354,6 +354,7 @@ func (s *Server) adminPostHandler(c echo.Context) error {
 
 	}
 
+	on := make(map[int]struct{})
 	for n, v := range values {
 		if !strings.HasPrefix(n, "hidden_") {
 			continue
@@ -371,10 +372,28 @@ func (s *Server) adminPostHandler(c echo.Context) error {
 		if err != nil {
 			continue
 		}
+		on[id] = struct{}{}
 
 		err = s.effects.Hide(id, true)
 		if err != nil {
 			c.Logger().Errorf("could not hide effect: %s", err.Error())
+		}
+	}
+
+	e := values["effects"]
+	for _, d := range e {
+		id, err := strconv.Atoi(d)
+		if err != nil {
+			continue
+		}
+
+		if _, ok := on[id]; ok {
+			continue
+		}
+
+		err = s.effects.Hide(id, false)
+		if err != nil {
+			c.Logger().Errorf("could not unhide effect: %s", err.Error())
 		}
 	}
 
