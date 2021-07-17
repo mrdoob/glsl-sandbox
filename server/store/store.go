@@ -6,7 +6,7 @@ import (
 )
 
 var (
-	ErrNotFound = fmt.Errorf("effect not found")
+	ErrNotFound = fmt.Errorf("not found")
 )
 
 type Effect struct {
