@@ -2,6 +2,7 @@ package store
 
 import (
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/jmoiron/sqlx"
@@ -197,6 +198,12 @@ SELECT * FROM versions
 	ORDER BY version
 `
 
+	sqlSelectVersionsMulti = `
+SELECT * FROM versions
+	WHERE effect IN (?)
+	ORDER BY version
+`
+
 	sqlSelectEffect = `
 SELECT * FROM effects
 	WHERE id = ?
@@ -335,6 +342,7 @@ func (s *Effects) Page(num int, size int, hidden bool) ([]Effect, error) {
 	defer iter.Close()
 
 	var effects []Effect
+	var ids []int
 	for iter.Next() {
 		var e sqliteEffect
 		err = iter.StructScan(&e)
@@ -343,14 +351,50 @@ func (s *Effects) Page(num int, size int, hidden bool) ([]Effect, error) {
 		}
 
 		effects = append(effects, sqliteToEffect(e))
+		ids = append(ids, e.ID)
+	}
+
+	if len(effects) == 0 {
+		return effects, nil
+	}
+
+	query, args, err := sqlx.In(sqlSelectVersionsMulti, ids)
+	if err != nil {
+		return nil, fmt.Errorf("could not construct versions query: %w", err)
+
+	}
+	iter, err = s.db.Queryx(query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("could not get versions: %w", err)
+	}
+	defer iter.Close()
+
+	versions := make(map[int][]sqliteVersion)
+	for iter.Next() {
+		var v sqliteVersion
+		err = iter.StructScan(&v)
+		if err != nil {
+			return nil, fmt.Errorf("could not retrieve version: %w", err)
+		}
+
+		versions[v.Effect] = append(versions[v.Effect], v)
+	}
+	if iter.Err() != nil {
+		return nil, fmt.Errorf("could not iterate versions: %w", err)
+	}
+
+	for _, e := range versions {
+		sort.Slice(e, func(i, j int) bool {
+			return e[i].Version < e[j].Version
+		})
 	}
 
 	for i, e := range effects {
-		versions, err := s.versions(e.ID)
-		if err != nil {
-			return nil, err
+		s := make([]Version, 0, len(versions[e.ID]))
+		for _, v := range versions[e.ID] {
+			s = append(s, sqliteToVersion(v))
 		}
-		effects[i].Versions = versions
+		effects[i].Versions = s
 	}
 
 	return effects, nil
