@@ -221,92 +221,105 @@ UPDATE effects
 )
 
 func (s *Effects) AddEffect(e Effect) error {
-	effect := sqliteFromEffect(e)
-	_, err := s.db.NamedExec(sqlInsertEffectID, effect)
-	if err != nil {
-		return fmt.Errorf("could not insert effect: %w", err)
-	}
-
-	for i, v := range e.Versions {
-		version := sqliteFromversion(v)
-		version.Version = i
-		version.Effect = effect.ID
-
-		_, err := s.db.NamedExec(sqlInsertVersion, version)
+	return s.transaction(func(tx *sqlx.Tx) error {
+		effect := sqliteFromEffect(e)
+		_, err := tx.NamedExec(sqlInsertEffectID, effect)
 		if err != nil {
-			return fmt.Errorf("could not insert version: %w", err)
+			return fmt.Errorf("could not insert effect: %w", err)
 		}
-	}
 
-	return nil
+		for i, v := range e.Versions {
+			version := sqliteFromversion(v)
+			version.Version = i
+			version.Effect = effect.ID
+
+			_, err := tx.NamedExec(sqlInsertVersion, version)
+			if err != nil {
+				return fmt.Errorf("could not insert version: %w", err)
+			}
+		}
+
+		return nil
+	})
 }
 
 func (s *Effects) Add(
 	parent int, parentVersion int, user string, version string,
 ) (int, error) {
-	t := time.Now()
-	e := sqliteEffect{
-		CreatedAt:     t,
-		ModifiedAt:    t,
-		Parent:        parent,
-		ParentVersion: parentVersion,
-		User:          user,
-	}
+	var lastID int
+	err := s.transaction(func(tx *sqlx.Tx) error {
+		t := time.Now()
+		e := sqliteEffect{
+			CreatedAt:     t,
+			ModifiedAt:    t,
+			Parent:        parent,
+			ParentVersion: parentVersion,
+			User:          user,
+		}
 
-	r, err := s.db.NamedExec(sqlInsertEffect, e)
-	if err != nil {
-		return -1, fmt.Errorf("could not insert effect: %w", err)
-	}
+		r, err := tx.NamedExec(sqlInsertEffect, e)
+		if err != nil {
+			return fmt.Errorf("could not insert effect: %w", err)
+		}
 
-	id, err := r.LastInsertId()
-	if err != nil {
-		return -1, fmt.Errorf("could not get effect id: %w", err)
-	}
+		id, err := r.LastInsertId()
+		if err != nil {
+			return fmt.Errorf("could not get effect id: %w", err)
+		}
+		lastID = int(id)
 
-	v := sqliteVersion{
-		Version:   0,
-		Effect:    int(id),
-		CreatedAt: t,
-		Code:      version,
-	}
-	_, err = s.db.NamedExec(sqlInsertVersion, v)
-	if err != nil {
-		return int(id), fmt.Errorf("could not insert version: %w", err)
-	}
+		v := sqliteVersion{
+			Version:   0,
+			Effect:    int(id),
+			CreatedAt: t,
+			Code:      version,
+		}
+		_, err = tx.NamedExec(sqlInsertVersion, v)
+		if err != nil {
+			return fmt.Errorf("could not insert version: %w", err)
+		}
+		return nil
+	})
 
-	return int(id), nil
+	return lastID, err
 }
 
 func (s *Effects) AddVersion(id int, code string) (int, error) {
-	t := time.Now()
-	var maxVersion *int
-	r := s.db.QueryRowx(sqlSelectMaxVersion, id)
-	err := r.Scan(&maxVersion)
-	if err != nil {
-		return -1, fmt.Errorf("could not get max version: %w", err)
-	}
+	var lastVersion int
+	err := s.transaction(func(tx *sqlx.Tx) error {
+		t := time.Now()
+		var maxVersion *int
+		r := tx.QueryRowx(sqlSelectMaxVersion, id)
+		err := r.Scan(&maxVersion)
+		if err != nil {
+			return fmt.Errorf("could not get max version: %w", err)
+		}
 
-	if maxVersion == nil {
-		return -1, ErrNotFound
-	}
+		if maxVersion == nil {
+			return ErrNotFound
+		}
 
-	version := sqliteVersion{
-		Version:   *maxVersion + 1,
-		Effect:    id,
-		CreatedAt: t,
-		Code:      code,
-	}
-	_, err = s.db.NamedExec(sqlInsertVersion, version)
-	if err != nil {
-		return -1, fmt.Errorf("could not insert version: %w", err)
-	}
+		version := sqliteVersion{
+			Version:   *maxVersion + 1,
+			Effect:    id,
+			CreatedAt: t,
+			Code:      code,
+		}
+		_, err = tx.NamedExec(sqlInsertVersion, version)
+		if err != nil {
+			return fmt.Errorf("could not insert version: %w", err)
+		}
+		lastVersion = version.Version
 
-	_, err = s.db.Exec(sqlUpdateEffectModification, t, id)
-	if err != nil {
-		return -1, fmt.Errorf("could not update effect: %w", err)
-	}
+		_, err = tx.Exec(sqlUpdateEffectModification, t, id)
+		if err != nil {
+			return fmt.Errorf("could not update effect: %w", err)
+		}
 
-	return version.Version, nil
+		return nil
+	})
+
+	return lastVersion, err
 }
 
 func (s *Effects) Page(num int, size int, hidden bool) ([]Effect, error) {
@@ -396,6 +409,26 @@ func (s *Effects) Hide(id int, hidden bool) error {
 	}
 	if n < 1 {
 		return ErrNotFound
+	}
+
+	return nil
+}
+
+func (s *Effects) transaction(f func(*sqlx.Tx) error) error {
+	tx, err := s.db.Beginx()
+	if err != nil {
+		return fmt.Errorf("could not create transaction: %w", err)
+	}
+
+	err = f(tx)
+	if err != nil {
+		_ = tx.Rollback()
+		return err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return fmt.Errorf("could not commit transaction: %w", err)
 	}
 
 	return nil

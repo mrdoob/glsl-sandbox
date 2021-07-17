@@ -80,3 +80,42 @@ func TestUserUpdate(t *testing.T) {
 	require.Error(t, err)
 	require.True(t, errors.Is(err, ErrNotFound))
 }
+
+func TestUserUpdateFunc(t *testing.T) {
+	db, err := sqlx.Connect("sqlite", testDatabase)
+	require.NoError(t, err)
+
+	users, err := NewUsers(db)
+	require.NoError(t, err)
+
+	err = users.Add(testUser)
+	require.NoError(t, err)
+
+	expected := User{
+		Name:      "test",
+		Password:  []byte("newpassword"),
+		Email:     "newemail",
+		Role:      RoleModerator,
+		Active:    false,
+		CreatedAt: time.Now(),
+	}
+	err = users.UpdateFunc("test", func(u User) User {
+		return expected
+	})
+	require.NoError(t, err)
+
+	u, err := users.User("test")
+	require.NoError(t, err)
+	require.Equal(t, expected.Name, u.Name)
+	require.Equal(t, expected.Password, u.Password)
+	require.Equal(t, expected.Email, u.Email)
+	require.Equal(t, expected.Role, u.Role)
+	require.Equal(t, expected.Active, u.Active)
+	require.True(t, expected.CreatedAt.Equal(u.CreatedAt))
+
+	err = users.UpdateFunc("inexistent", func(u User) User {
+		return u
+	})
+	require.Error(t, err)
+	require.True(t, errors.Is(err, ErrNotFound))
+}

@@ -1,6 +1,8 @@
 package store
 
 import (
+	"database/sql"
+	"errors"
 	"fmt"
 	"time"
 
@@ -141,5 +143,55 @@ func (s *Users) Update(user User) error {
 	if rows == 0 {
 		return ErrNotFound
 	}
+	return nil
+}
+
+func (s *Users) UpdateFunc(name string, f func(User) User) error {
+	return s.transaction(func(tx *sqlx.Tx) error {
+		var u User
+		r := tx.QueryRowx(sqlSelectUser, name)
+		err := r.StructScan(&u)
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return ErrNotFound
+			}
+			return fmt.Errorf("could not get user: %w", err)
+		}
+
+		u = f(u)
+
+		res, err := tx.NamedExec(sqlUpdateUser, u)
+		if err != nil {
+			return fmt.Errorf("could not update user: %w", err)
+		}
+
+		rows, err := res.RowsAffected()
+		if err != nil {
+			return fmt.Errorf("could not get affected rows: %w", err)
+		}
+		if rows == 0 {
+			return ErrNotFound
+		}
+		return nil
+	})
+}
+
+func (s *Users) transaction(f func(*sqlx.Tx) error) error {
+	tx, err := s.db.Beginx()
+	if err != nil {
+		return fmt.Errorf("could not create transaction: %w", err)
+	}
+
+	err = f(tx)
+	if err != nil {
+		_ = tx.Rollback()
+		return err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return fmt.Errorf("could not commit transaction: %w", err)
+	}
+
 	return nil
 }
