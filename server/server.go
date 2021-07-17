@@ -123,22 +123,36 @@ func (s *Server) adminHandler(c echo.Context) error {
 	return s.indexRender(c, true)
 }
 
+// galleryEffect has information about each effect displayed in the gallery.
 type galleryEffect struct {
-	ID      int
+	// ID is the effect identifyier.
+	ID int
+	// Version is the latest effect version.
 	Version int
-	Image   string
-	Hidden  bool
+	// Image holds the thumbnail name.
+	Image string
+	// Hidden tells if the effect has been moderated.
+	Hidden bool
 }
 
+// galleryData has information about the current gallery page.
 type galleryData struct {
-	Effects      []galleryEffect
-	URL          string
-	Page         int
-	IsPrevious   bool
+	// Effects is an array with all the effects for the page.
+	Effects []galleryEffect
+	// URL is the path of the gallery. Can be "/" or "/admin".
+	URL string
+	// Page holds the current page number.
+	Page int
+	// IsPrevious is true if there is a previous page.
+	IsPrevious bool
+	// PreviousPage is the previous page number.
 	PreviousPage int
-	IsNext       bool
-	NextPage     int
-	Admin        bool
+	// IsNext is true if there is a next page.
+	IsNext bool
+	// NextPage is the next page number.
+	NextPage int
+	// Admin is true when accessing "/admin" path.
+	Admin bool
 }
 
 func (s *Server) indexRender(c echo.Context, admin bool) error {
