@@ -60,11 +60,11 @@ func (t *Template) Render(
 type Server struct {
 	echo     *echo.Echo
 	template *Template
-	store    store.Store
+	effects  *store.Effects
 	dataPath string
 }
 
-func New(s store.Store, dataPath string) *Server {
+func New(e *store.Effects, dataPath string) *Server {
 	t := template.New("")
 	t = t.Funcs(template.FuncMap{
 		"checkboxID": func(id int) string {
@@ -84,7 +84,7 @@ func New(s store.Store, dataPath string) *Server {
 		template: &Template{
 			templates: t,
 		},
-		store:    s,
+		effects:  e,
 		dataPath: dataPath,
 	}
 }
@@ -165,7 +165,7 @@ func (s *Server) indexRender(c echo.Context, admin bool) error {
 		page = 0
 	}
 
-	p, err := s.store.Page(page, perPage, admin)
+	p, err := s.effects.Page(page, perPage, admin)
 	if err != nil {
 		return c.String(http.StatusInternalServerError, "error")
 	}
@@ -219,7 +219,7 @@ func (s *Server) itemHandler(c echo.Context) error {
 		return c.String(http.StatusBadRequest, "{}")
 	}
 
-	effect, err := s.store.Effect(id)
+	effect, err := s.effects.Effect(id)
 	if err != nil {
 		return c.String(http.StatusBadRequest, "{}")
 	}
@@ -294,7 +294,7 @@ func (s *Server) saveHandler(c echo.Context) error {
 			parent, parentVersion = -1, -1
 		}
 
-		id, err = s.store.Add(parent, parentVersion, save.User, save.Code)
+		id, err = s.effects.Add(parent, parentVersion, save.User, save.Code)
 		if err != nil {
 			c.Logger().Errorf("could not save new effect: %s", err.Error())
 			return c.String(http.StatusInternalServerError, "")
@@ -312,7 +312,7 @@ func (s *Server) saveHandler(c echo.Context) error {
 			return c.String(http.StatusBadRequest, "")
 		}
 
-		version, err = s.store.AddVersion(id, save.Code)
+		version, err = s.effects.AddVersion(id, save.Code)
 		if err != nil {
 			c.Logger().Errorf("could not save new version: %s", err.Error())
 			return c.String(http.StatusInternalServerError, "")
@@ -360,7 +360,7 @@ func (s *Server) adminPostHandler(c echo.Context) error {
 			continue
 		}
 
-		err = s.store.Hide(id, true)
+		err = s.effects.Hide(id, true)
 		if err != nil {
 			c.Logger().Errorf("could not hide effect: %s", err.Error())
 		}

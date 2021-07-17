@@ -9,6 +9,26 @@ import (
 	_ "modernc.org/sqlite"
 )
 
+type Effect struct {
+	ID            int
+	CreatedAt     time.Time
+	ModifiedAt    time.Time
+	Parent        int
+	ParentVersion int
+	User          string
+	Hidden        bool
+	Versions      []Version
+}
+
+func (e Effect) ImageName() string {
+	return fmt.Sprintf("%d.png", e.ID)
+}
+
+type Version struct {
+	CreatedAt time.Time
+	Code      string
+}
+
 type sqliteEffect struct {
 	ID            int       `db:"id"`
 	CreatedAt     time.Time `db:"created_at"`
@@ -61,22 +81,22 @@ CREATE INDEX IF NOT EXISTS idx_versions_id ON versions (effect, version)
 `
 )
 
-type Sqlite struct {
+type Effects struct {
 	db *sqlx.DB
 }
 
-func NewSqlite(path string) (*Sqlite, error) {
-	db, err := sqlx.Connect("sqlite", path)
-	if err != nil {
-		return nil, fmt.Errorf("could not open database: %w", err)
-	}
-
-	return &Sqlite{
+func NewEffects(db *sqlx.DB) (*Effects, error) {
+	e := &Effects{
 		db: db,
-	}, nil
+	}
+	err := e.init()
+	if err != nil {
+		return nil, err
+	}
+	return e, nil
 }
 
-func (s *Sqlite) Init() error {
+func (s *Effects) init() error {
 	_, err := s.db.Exec(sqlCreateEffects)
 	if err != nil {
 		return fmt.Errorf("could not create table effects: %w", err)
@@ -200,7 +220,7 @@ UPDATE effects
 `
 )
 
-func (s *Sqlite) AddEffect(e Effect) error {
+func (s *Effects) AddEffect(e Effect) error {
 	effect := sqliteFromEffect(e)
 	_, err := s.db.NamedExec(sqlInsertEffectID, effect)
 	if err != nil {
@@ -221,7 +241,7 @@ func (s *Sqlite) AddEffect(e Effect) error {
 	return nil
 }
 
-func (s *Sqlite) Add(
+func (s *Effects) Add(
 	parent int, parentVersion int, user string, version string,
 ) (int, error) {
 	t := time.Now()
@@ -257,7 +277,7 @@ func (s *Sqlite) Add(
 	return int(id), nil
 }
 
-func (s *Sqlite) AddVersion(id int, code string) (int, error) {
+func (s *Effects) AddVersion(id int, code string) (int, error) {
 	t := time.Now()
 	var maxVersion *int
 	r := s.db.QueryRowx(sqlSelectMaxVersion, id)
@@ -289,7 +309,7 @@ func (s *Sqlite) AddVersion(id int, code string) (int, error) {
 	return version.Version, nil
 }
 
-func (s *Sqlite) Page(num int, size int, hidden bool) ([]Effect, error) {
+func (s *Effects) Page(num int, size int, hidden bool) ([]Effect, error) {
 	query := sqlSelectEffects
 	if hidden {
 		query = sqlSelectEffectsAll
@@ -323,7 +343,7 @@ func (s *Sqlite) Page(num int, size int, hidden bool) ([]Effect, error) {
 	return effects, nil
 }
 
-func (s *Sqlite) versions(id int) ([]Version, error) {
+func (s *Effects) versions(id int) ([]Version, error) {
 	iter, err := s.db.Queryx(sqlSelectVersions, id)
 	if err != nil {
 		return nil, fmt.Errorf("could not get versions: %w", err)
@@ -344,7 +364,7 @@ func (s *Sqlite) versions(id int) ([]Version, error) {
 	return versions, nil
 }
 
-func (s *Sqlite) Effect(id int) (Effect, error) {
+func (s *Effects) Effect(id int) (Effect, error) {
 	var e sqliteEffect
 	r := s.db.QueryRowx(sqlSelectEffect, id)
 	err := r.StructScan(&e)
@@ -363,7 +383,7 @@ func (s *Sqlite) Effect(id int) (Effect, error) {
 	return effect, nil
 }
 
-func (s *Sqlite) Hide(id int, hidden bool) error {
+func (s *Effects) Hide(id int, hidden bool) error {
 	r, err := s.db.Exec(sqlUpdateEffectHide, hidden, id)
 	if err != nil {
 		return fmt.Errorf("could not update effect: %w", err)

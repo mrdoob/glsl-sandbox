@@ -59,7 +59,7 @@ func Convert(j JSONEffect) Effect {
 }
 
 // Import a BSON dump to a store.
-func Import(r io.Reader, s Store) error {
+func Import(r io.Reader, s *Effects) error {
 	sb := make([]byte, 16*1024*1024) // initial line buffer of 16 Mb
 	scanner := bufio.NewScanner(r)
 	scanner.Buffer(sb, 64*1024*1024)

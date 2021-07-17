@@ -6,12 +6,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/require"
 )
 
 type helper struct {
 	name string
-	test func(t *testing.T, s Store)
+	test func(t *testing.T, s *Effects)
 }
 
 var tests = []helper{
@@ -21,23 +22,13 @@ var tests = []helper{
 	{"hide", testHide},
 }
 
-func TestMemory(t *testing.T) {
+func TestEffects(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			s, err := NewMemory()
-			require.NoError(t, err)
-			test.test(t, s)
-		})
-	}
-}
-
-func TestSqlite(t *testing.T) {
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			s, err := NewSqlite(":memory:")
+			db, err := sqlx.Open("sqlite", testDatabase)
 			require.NoError(t, err)
 
-			err = s.Init()
+			s, err := NewEffects(db)
 			require.NoError(t, err)
 
 			test.test(t, s)
@@ -45,7 +36,7 @@ func TestSqlite(t *testing.T) {
 	}
 }
 
-func testImport(t *testing.T, s Store) {
+func testImport(t *testing.T, s *Effects) {
 	buf := bytes.NewBufferString(importData)
 	err := Import(buf, s)
 	require.NoError(t, err)
@@ -74,7 +65,7 @@ func testImport(t *testing.T, s Store) {
 	}
 }
 
-func testHidden(t *testing.T, s Store) {
+func testHidden(t *testing.T, s *Effects) {
 	for _, e := range testEffects {
 		err := s.AddEffect(e)
 		require.NoError(t, err)
@@ -92,7 +83,7 @@ func testHidden(t *testing.T, s Store) {
 	require.Equal(t, 2, es[1].ID)
 }
 
-func testAddVersion(t *testing.T, s Store) {
+func testAddVersion(t *testing.T, s *Effects) {
 	id, err := s.Add(10, 5, "user", "first")
 	require.NoError(t, err)
 	require.Equal(t, 1, id)
@@ -132,7 +123,7 @@ func testAddVersion(t *testing.T, s Store) {
 	require.Equal(t, err, ErrNotFound)
 }
 
-func testHide(t *testing.T, s Store) {
+func testHide(t *testing.T, s *Effects) {
 	id, err := s.Add(10, 5, "user", "first")
 	require.NoError(t, err)
 	require.Equal(t, 1, id)

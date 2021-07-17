@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/jmoiron/sqlx"
 	"github.com/kelseyhightower/envconfig"
 	"github.com/mrdoob/glsl-sandbox/server"
 	"github.com/mrdoob/glsl-sandbox/server/store"
@@ -35,23 +36,24 @@ func start() error {
 		return fmt.Errorf("could not create data directory: %w", err)
 	}
 
-	db, err := store.NewSqlite(dbURL(cfg.DataPath))
+	db, err := sqlx.Open("sqlite", dbURL(cfg.DataPath))
 	if err != nil {
 		return fmt.Errorf("could not open database: %w", err)
 	}
-	err = db.Init()
+
+	effects, err := store.NewEffects(db)
 	if err != nil {
-		return fmt.Errorf("could not initialize database: %w", err)
+		return fmt.Errorf("could not initialize effects database: %w", err)
 	}
 
 	if cfg.Import != "" {
-		err = importDatabase(db, cfg.Import)
+		err = importDatabase(effects, cfg.Import)
 		if err != nil {
 			return fmt.Errorf("could not import database: %w", err)
 		}
 	}
 
-	s := server.New(db, cfg.DataPath)
+	s := server.New(effects, cfg.DataPath)
 	return s.Start()
 }
 
@@ -61,14 +63,14 @@ func dbURL(path string) string {
 	return fmt.Sprintf("file:%s", file)
 }
 
-func importDatabase(db store.Store, file string) error {
+func importDatabase(effects *store.Effects, file string) error {
 	f, err := os.Open(file)
 	if err != nil {
 		return fmt.Errorf("could not open import file: %w", err)
 	}
 	defer f.Close()
 
-	err = store.Import(f, db)
+	err = store.Import(f, effects)
 	if err != nil {
 		return fmt.Errorf("could not import effects: %w", err)
 	}
