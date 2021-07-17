@@ -61,10 +61,11 @@ type Server struct {
 	echo     *echo.Echo
 	template *Template
 	effects  *store.Effects
+	auth     *Auth
 	dataPath string
 }
 
-func New(e *store.Effects, dataPath string) *Server {
+func New(e *store.Effects, auth *Auth, dataPath string) *Server {
 	t := template.New("")
 	t = t.Funcs(template.FuncMap{
 		"checkboxID": func(id int) string {
@@ -85,6 +86,7 @@ func New(e *store.Effects, dataPath string) *Server {
 			templates: t,
 		},
 		effects:  e,
+		auth:     auth,
 		dataPath: dataPath,
 	}
 }
@@ -106,13 +108,23 @@ func (s *Server) routes() {
 	s.echo.GET("/e", s.effectHandler)
 	s.echo.POST("/e", s.saveHandler)
 	s.echo.GET("/item/:id", s.itemHandler)
-	s.echo.GET("/admin", s.adminHandler)
-	s.echo.POST("/admin", s.adminPostHandler)
 
 	s.echo.Static("/thumbs", filepath.Join(s.dataPath, "thumbs"))
 	s.echo.Static("/css", "./server/assets/css")
 	s.echo.Static("/js", "./server/assets/js")
 	s.echo.File("/diff", "./server/assets/diff.html")
+
+	s.echo.File("/login", "./server/assets/login.html")
+	s.echo.POST("/login", s.loginHandler)
+
+	admin := s.echo.Group("/admin")
+	admin.Use(s.auth.Middleware(func(err error, c echo.Context) error {
+		c.Logger().Errorf("not authorized: %s", err.Error())
+		return c.Redirect(http.StatusSeeOther, "/login")
+	}))
+
+	admin.GET("", s.adminHandler)
+	admin.POST("", s.adminPostHandler)
 }
 
 func (s *Server) indexHandler(c echo.Context) error {
@@ -367,6 +379,30 @@ func (s *Server) adminPostHandler(c echo.Context) error {
 	}
 
 	return c.Redirect(http.StatusSeeOther, url)
+}
+
+type loginData struct {
+	Name     string `form:"name"`
+	Password string `form:"password"`
+}
+
+func (s *Server) loginHandler(c echo.Context) error {
+	log := c.Logger()
+
+	var l loginData
+	err := c.Bind(&l)
+	if err != nil {
+		log.Errorf("malformed form: %s", err.Error())
+		return c.Redirect(http.StatusSeeOther, "/login")
+	}
+
+	err = s.auth.Login(c, l.Name, l.Password)
+	if err != nil {
+		log.Errorf("could not authenticate: %s", err.Error())
+		return c.Redirect(http.StatusSeeOther, "/login")
+	}
+
+	return c.Redirect(http.StatusSeeOther, "/admin")
 }
 
 func thumbPath(dataPath string, id int) string {

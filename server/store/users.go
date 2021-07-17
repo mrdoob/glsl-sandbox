@@ -18,7 +18,7 @@ const (
 type User struct {
 	ID        int       `db:"id"`
 	Name      string    `db:"name"`
-	Password  string    `db:"password"`
+	Password  []byte    `db:"password"`
 	Email     string    `db:"email"`
 	Role      Role      `db:"role"`
 	Active    bool      `db:"active"`
@@ -30,7 +30,7 @@ const (
 CREATE TABLE IF NOT EXISTS users (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
 	name TEXT,
-	password TEXT,
+	password BLOB,
 	email TEXT,
 	role TEXT,
 	active INTEGER,

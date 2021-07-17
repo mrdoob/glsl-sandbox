@@ -15,7 +15,7 @@ var (
 	testTime     = time.Date(2021, time.January, 1, 0, 0, 0, 0, time.UTC)
 	testUser     = User{
 		Name:      "test",
-		Password:  "password",
+		Password:  []byte("password"),
 		Email:     "email",
 		Role:      RoleAdmin,
 		Active:    true,
@@ -57,7 +57,7 @@ func TestUserUpdate(t *testing.T) {
 
 	expected := User{
 		Name:      "test",
-		Password:  "newpassword",
+		Password:  []byte("newpassword"),
 		Email:     "newemail",
 		Role:      RoleModerator,
 		Active:    false,

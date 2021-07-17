@@ -1,9 +1,13 @@
 package main
 
 import (
+	"crypto/md5"
+	"encoding/hex"
 	"fmt"
+	"math/rand"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/kelseyhightower/envconfig"
@@ -14,8 +18,9 @@ import (
 const dbName = "glslsandbox.db"
 
 type Config struct {
-	DataPath string `envconfig:"DATA_PATH" default:"./data"`
-	Import   string `envconfig:"IMPORT"`
+	DataPath   string `envconfig:"DATA_PATH" default:"./data"`
+	Import     string `envconfig:"IMPORT"`
+	AuthSecret string `envconfig:"AUTH_SECRET" default:"secret"`
 }
 
 func main() {
@@ -46,6 +51,18 @@ func start() error {
 		return fmt.Errorf("could not initialize effects database: %w", err)
 	}
 
+	users, err := store.NewUsers(db)
+	if err != nil {
+		return fmt.Errorf("could not initialize users database: %w", err)
+	}
+
+	auth := server.NewAuth(users, cfg.AuthSecret)
+
+	err = createUser(auth, users)
+	if err != nil {
+		return err
+	}
+
 	if cfg.Import != "" {
 		err = importDatabase(effects, cfg.Import)
 		if err != nil {
@@ -53,7 +70,7 @@ func start() error {
 		}
 	}
 
-	s := server.New(effects, cfg.DataPath)
+	s := server.New(effects, auth, cfg.DataPath)
 	return s.Start()
 }
 
@@ -75,5 +92,25 @@ func importDatabase(effects *store.Effects, file string) error {
 		return fmt.Errorf("could not import effects: %w", err)
 	}
 
+	return nil
+}
+
+func createUser(auth *server.Auth, users *store.Users) error {
+	_, err := users.User("admin")
+	if err == nil {
+		return nil
+	}
+
+	b := make([]byte, 16)
+	rand.Seed(time.Now().UnixNano())
+	rand.Read(b)
+	m := md5.Sum(b)
+	password := hex.EncodeToString(m[:])
+	err = auth.Add("admin", password, "", store.RoleAdmin)
+	if err != nil {
+		return fmt.Errorf("could not create admin user: %w", err)
+	}
+
+	fmt.Printf("created user 'admin' with password '%s'", password)
 	return nil
 }

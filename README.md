@@ -34,6 +34,8 @@ $ go build ./server/cmd/glslsandbox
 $ ./glslsandbox
 ```
 
+* The first time it starts it creates an admin user and the credentials are printed.
+
 * The server should be accessible on http://localhost:8888
 
 * Admin interface is on http://localhost:8888/admin
