@@ -6,7 +6,7 @@ import (
 
 	"github.com/jmoiron/sqlx"
 
-	_ "github.com/mattn/go-sqlite3"
+	_ "modernc.org/sqlite"
 )
 
 type sqliteEffect struct {
@@ -66,7 +66,7 @@ type Sqlite struct {
 }
 
 func NewSqlite(path string) (*Sqlite, error) {
-	db, err := sqlx.Connect("sqlite3", path)
+	db, err := sqlx.Connect("sqlite", path)
 	if err != nil {
 		return nil, fmt.Errorf("could not open database: %w", err)
 	}
