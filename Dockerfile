@@ -11,6 +11,11 @@ RUN go build -v ./server/cmd/glslsandbox
 
 FROM debian:buster-slim
 
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends ca-certificates && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
 EXPOSE 8888
 EXPOSE 8883
 COPY --from=builder /build/ /glslsandbox/
