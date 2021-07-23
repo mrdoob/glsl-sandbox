@@ -48,6 +48,11 @@ func Convert(j JSONEffect) Effect {
 		Versions:      make([]Version, 0, len(j.Versions)),
 	}
 
+	if e.Parent < 1 {
+		e.Parent = -1
+		e.ParentVersion = -1
+	}
+
 	for _, v := range j.Versions {
 		e.Versions = append(e.Versions, Version{
 			CreatedAt: v.CreatedAt.Time(),

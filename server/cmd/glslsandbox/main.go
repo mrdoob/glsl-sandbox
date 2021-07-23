@@ -38,7 +38,7 @@ func start() error {
 		return fmt.Errorf("could not read environment config: %w", err)
 	}
 
-	err := os.MkdirAll(filepath.Join(cfg.DataPath, "thumbs"), 0666)
+	err := os.MkdirAll(filepath.Join(cfg.DataPath, "thumbs"), 0770)
 	if err != nil {
 		return fmt.Errorf("could not create data directory: %w", err)
 	}
