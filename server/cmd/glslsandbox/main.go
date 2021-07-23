@@ -21,6 +21,8 @@ type Config struct {
 	DataPath   string `envconfig:"DATA_PATH" default:"./data"`
 	Import     string `envconfig:"IMPORT"`
 	AuthSecret string `envconfig:"AUTH_SECRET" default:"secret"`
+	Addr       string `envconfig:"ADDR" default:":8888"`
+	Dev        bool   `envconfig:"DEV" default:"true"`
 }
 
 func main() {
@@ -70,7 +72,11 @@ func start() error {
 		}
 	}
 
-	s := server.New(effects, auth, cfg.DataPath)
+	s, err := server.New(cfg.Addr, effects, auth, cfg.DataPath, cfg.Dev)
+	if err != nil {
+		return fmt.Errorf("could not create server: %w", err)
+	}
+
 	return s.Start()
 }
 

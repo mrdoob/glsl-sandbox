@@ -33,9 +33,7 @@ type Template struct {
 	templates *template.Template
 }
 
-func (t *Template) Render(
-	w io.Writer, name string, data interface{}, c echo.Context,
-) error {
+func prepareTemplate() (*template.Template, error) {
 	tpl := template.New("")
 	tpl = tpl.Funcs(template.FuncMap{
 		"checkboxID": func(id int) string {
@@ -51,13 +49,28 @@ func (t *Template) Render(
 	tpl, err := tpl.ParseFiles(pathGallery)
 	if err != nil {
 		fmt.Println("template error", err.Error())
-		return err
+		return nil, err
+	}
+
+	return tpl, nil
+}
+
+func (t *Template) Render(
+	w io.Writer, name string, data interface{}, c echo.Context,
+) error {
+	tpl := t.templates
+	if tpl == nil {
+		var err error
+		tpl, err = prepareTemplate()
+		if err != nil {
+			return err
+		}
 	}
 	return tpl.ExecuteTemplate(w, name, data)
-	// return t.templates.ExecuteTemplate(w, name, data)
 }
 
 type Server struct {
+	addr     string
 	echo     *echo.Echo
 	template *Template
 	effects  *store.Effects
@@ -65,35 +78,37 @@ type Server struct {
 	dataPath string
 }
 
-func New(e *store.Effects, auth *Auth, dataPath string) *Server {
-	t := template.New("")
-	t = t.Funcs(template.FuncMap{
-		"checkboxID": func(id int) string {
-			return fmt.Sprintf("hidden_%d", id)
-		},
-		"checked": func(b bool) string {
-			if b {
-				return "checked"
-			}
-			return ""
-		},
-	})
-	t = template.Must(t.ParseFiles(pathGallery))
+func New(
+	addr string,
+	e *store.Effects,
+	auth *Auth,
+	dataPath string,
+	dev bool,
+) (*Server, error) {
+	var tpl *template.Template
+	if !dev {
+		var err error
+		tpl, err = prepareTemplate()
+		if err != nil {
+			return nil, err
+		}
+	}
 
 	return &Server{
+		addr: addr,
 		echo: echo.New(),
 		template: &Template{
-			templates: t,
+			templates: tpl,
 		},
 		effects:  e,
 		auth:     auth,
 		dataPath: dataPath,
-	}
+	}, nil
 }
 
 func (s *Server) Start() error {
 	s.setup()
-	return s.echo.Start(":8888")
+	return s.echo.Start(s.addr)
 }
 
 func (s *Server) setup() {
