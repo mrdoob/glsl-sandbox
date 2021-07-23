@@ -17,11 +17,13 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/labstack/gommon/log"
 	"github.com/mrdoob/glsl-sandbox/server/store"
+	"golang.org/x/crypto/acme/autocert"
 )
 
 const (
 	pathGallery = "./server/assets/gallery.html"
-	pathThumbs  = "./data/thumbs"
+	pathThumbs  = "thumbs"
+	pathCerts   = "certs"
 	perPage     = 50
 )
 
@@ -71,6 +73,8 @@ func (t *Template) Render(
 
 type Server struct {
 	addr     string
+	tlsAddr  string
+	domains  []string
 	echo     *echo.Echo
 	template *Template
 	effects  *store.Effects
@@ -80,6 +84,8 @@ type Server struct {
 
 func New(
 	addr string,
+	tlsAddr string,
+	domains string,
 	e *store.Effects,
 	auth *Auth,
 	dataPath string,
@@ -94,9 +100,15 @@ func New(
 		}
 	}
 
+	if tlsAddr != "" && domains == "" {
+		return nil, fmt.Errorf("cannot specify TLS_ADDR without DOMAINS")
+	}
+
 	return &Server{
-		addr: addr,
-		echo: echo.New(),
+		addr:    addr,
+		tlsAddr: tlsAddr,
+		domains: strings.Split(domains, ","),
+		echo:    echo.New(),
 		template: &Template{
 			templates: tpl,
 		},
@@ -107,15 +119,44 @@ func New(
 }
 
 func (s *Server) Start() error {
-	s.setup()
+	err := s.setup()
+	if err != nil {
+		return err
+	}
+
+	if s.tlsAddr != "" {
+		go func() {
+			err := s.echo.Start(s.addr)
+			s.echo.Logger.Errorf("could not create http server: %s", err.Error())
+		}()
+
+		return s.echo.StartAutoTLS(s.tlsAddr)
+	}
+
 	return s.echo.Start(s.addr)
 }
 
-func (s *Server) setup() {
+func (s *Server) setup() error {
+	if s.tlsAddr != "" {
+		certs := filepath.Join(s.dataPath, pathCerts)
+		err := os.MkdirAll(certs, 0750)
+		if err != nil {
+			return fmt.Errorf("could not create certs directory: %w", err)
+		}
+
+		s.echo.AutoTLSManager.Cache = autocert.DirCache(certs)
+		s.echo.AutoTLSManager.HostPolicy = autocert.HostWhitelist(s.domains...)
+
+		s.echo.Pre(middleware.HTTPSRedirect())
+	}
+
+	s.echo.Use(middleware.Recover())
 	s.echo.Renderer = s.template
 	s.echo.Logger.SetLevel(log.DEBUG)
 	s.echo.Use(middleware.Logger())
 	s.routes()
+
+	return nil
 }
 
 func (s *Server) routes() {
@@ -124,7 +165,7 @@ func (s *Server) routes() {
 	s.echo.POST("/e", s.saveHandler)
 	s.echo.GET("/item/:id", s.itemHandler)
 
-	s.echo.Static("/thumbs", filepath.Join(s.dataPath, "thumbs"))
+	s.echo.Static("/thumbs", filepath.Join(s.dataPath, pathThumbs))
 	s.echo.Static("/css", "./server/assets/css")
 	s.echo.Static("/js", "./server/assets/js")
 	s.echo.File("/diff", "./server/assets/diff.html")
@@ -440,7 +481,7 @@ func (s *Server) loginHandler(c echo.Context) error {
 }
 
 func thumbPath(dataPath string, id int) string {
-	return filepath.Join(dataPath, "thumbs", fmt.Sprintf("%d.png", id))
+	return filepath.Join(dataPath, pathThumbs, fmt.Sprintf("%d.png", id))
 }
 
 func saveImage(path string, data []byte) error {

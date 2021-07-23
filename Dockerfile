@@ -12,5 +12,6 @@ RUN go build -v ./server/cmd/glslsandbox
 FROM debian:buster-slim
 
 EXPOSE 8888
+EXPOSE 8883
 COPY --from=builder /build/ /glslsandbox/
 ENTRYPOINT [ "/glslsandbox/entrypoint.sh" ]

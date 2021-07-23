@@ -22,6 +22,8 @@ type Config struct {
 	Import     string `envconfig:"IMPORT"`
 	AuthSecret string `envconfig:"AUTH_SECRET" default:"secret"`
 	Addr       string `envconfig:"ADDR" default:":8888"`
+	TLSAddr    string `envconfig:"TLS_ADDR"`
+	Domains    string `envconfig:"DOMAINS" default:"www.glslsandbox.com,glslsandbox.com"`
 	Dev        bool   `envconfig:"DEV" default:"true"`
 }
 
@@ -72,7 +74,15 @@ func start() error {
 		}
 	}
 
-	s, err := server.New(cfg.Addr, effects, auth, cfg.DataPath, cfg.Dev)
+	s, err := server.New(
+		cfg.Addr,
+		cfg.TLSAddr,
+		cfg.Domains,
+		effects,
+		auth,
+		cfg.DataPath,
+		cfg.Dev,
+	)
 	if err != nil {
 		return fmt.Errorf("could not create server: %w", err)
 	}
