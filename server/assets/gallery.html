@@ -15,11 +15,9 @@
 			a{
 				color: #aaa;
 				text-decoration: none;
-				border-bottom: 1px solid #444;
 			}
 			a:hover{
 				color: #009DE9;
-				border-bottom: 1px solid #009DE9;
 			}
 			
 			h1, h1 a, h2{
@@ -33,7 +31,6 @@
 				margin-top: 2em;
 			}
 			#gallery{
-				/* display: grid; */
 				width: 100%;
 				margin-top: 4em;
 			}
@@ -42,7 +39,6 @@
 			}
 			#gallery img{
 				margin-right: 2em;
-				margin-bottom: 2em;
 				width: 200px;
 				height: 100px;
 				border: 1px solid #212121;
@@ -53,9 +49,12 @@
 			}
 			.effect {
 				float: left;
+				margin-bottom: 2em;
+			}
+			form {
+				margin-bottom: 2em;
 			}
 			label{
-				/* display: block; */
 				margin-top: 1.4em;
 				margin-bottom: 0.6em;
 				font-size: 14px;
@@ -99,9 +98,11 @@ gallery by <a href="http://twitter.com/thevaw">@thevaw</a> and <a href="http://t
 		<a href='/e#{{ .ID }}.{{ .Version }}'><img src='{{ .Image }}'></a>
 		{{ if $admin }}
 		{{ $name := checkboxID .ID }}
+		<div>
 		<label style="color:#009DE9" for="{{ $name }}">Hidden</label>
 		<input type="checkbox" id="{{ $name }}" name="{{ $name }}" {{ checked .Hidden }}>
 		<input type="hidden" name="effects" value="{{ .ID }}">
+		</div>
 		{{ end }}
 	</div>
 {{ end }}
