@@ -1,0 +1,8 @@
+version: "3.9"
+services:
+  glslsandbox:
+    image: ghcr.io/jfontan/glsl-sandbox:latest
+    volumes:
+      - ./data:/data
+    ports:
+      - "3000:8888"

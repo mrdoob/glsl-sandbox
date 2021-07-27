@@ -1,3 +1,4 @@
+{{ define "gallery" }}
 <!DOCTYPE html>
 <html lang="en">
 	<head>
@@ -14,11 +15,9 @@
 			a{
 				color: #aaa;
 				text-decoration: none;
-				border-bottom: 1px solid #444;
 			}
 			a:hover{
 				color: #009DE9;
-				border-bottom: 1px solid #009DE9;
 			}
 			
 			h1, h1 a, h2{
@@ -32,6 +31,7 @@
 				margin-top: 2em;
 			}
 			#gallery{
+				width: 100%;
 				margin-top: 4em;
 			}
 			#gallery>a{
@@ -39,7 +39,6 @@
 			}
 			#gallery img{
 				margin-right: 2em;
-				margin-bottom: 2em;
 				width: 200px;
 				height: 100px;
 				border: 1px solid #212121;
@@ -48,8 +47,14 @@
 				box-shadow: 0px 0px 24px 10px #263D65;
 				border: 1px solid #316FAE;
 			}
+			.effect {
+				float: left;
+				margin-bottom: 2em;
+			}
+			form {
+				margin-bottom: 2em;
+			}
 			label{
-				display: block;
 				margin-top: 1.4em;
 				margin-bottom: 0.6em;
 				font-size: 14px;
@@ -81,26 +86,49 @@ gallery by <a href="http://twitter.com/thevaw">@thevaw</a> and <a href="http://t
 
 <div id="gallery">
 
-<% effects.each do |effect| %>
-	<a href='/e#<%= effect['_id'] %>.<%= effect['versions'].length-1 %>'><img src='<%= image(effect) %>'></a>
-<% end %>
+{{ if .Admin }}
+<form action="/admin" method="POST">
+	<input type="hidden" id="page" name="page" value="{{ .Page }}">
+{{ end }}
+
+{{ $admin := .Admin }}
+
+{{ range .Effects }}
+	<div class="effect">
+		<a href='/e#{{ .ID }}.{{ .Version }}'><img src='{{ .Image }}'></a>
+		{{ if $admin }}
+		{{ $name := checkboxID .ID }}
+		<div>
+		<label style="color:#009DE9" for="{{ $name }}">Hidden</label>
+		<input type="checkbox" id="{{ $name }}" name="{{ $name }}" {{ checked .Hidden }}>
+		<input type="hidden" name="effects" value="{{ .ID }}">
+		</div>
+		{{ end }}
+	</div>
+{{ end }}
+
+{{ if .Admin }}
+	<input type="submit" value="Submit">
+</form>
+{{ end }}
 
 </div>
 
 <div id="paginate">
-<% if previous_page %>
-<a href='/?page=<%= previous_page %>'>Previous page</a>
+{{ if .IsPrevious }}
+<a href='{{ .URL }}?page={{ .PreviousPage }}'>Previous page</a>
 
-<% if next_page %>
+{{ if .IsNext }}
 &nbsp;&nbsp;
-<% end %>
+{{ end }}
 
-<% end %>
+{{ end }}
 
-<% if next_page %>
-<a href='/?page=<%= next_page %>'>Next page</a>
-<% end %>
+{{ if .IsNext }}
+<a href='{{ .URL }}?page={{ .NextPage }}'>Next page</a>
+{{ end }}
 </div>
 
 </body>
 </html>
+{{ end }}
