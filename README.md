@@ -26,7 +26,7 @@ $ tar xvf glslsandbox-data.tar.gz
 $ go build ./server/cmd/glslsandbox
 ```
 
-* Alternatively you can download and uncompress the binary in the repository directory from https://github.com/jfontan/glsl-sandbox/releases/latest
+* Alternatively you can download and uncompress the binary in the repository directory from https://github.com/mrdoob/glsl-sandbox/releases/latest
 
 * Run server:
 
