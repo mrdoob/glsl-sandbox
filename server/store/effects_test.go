@@ -20,6 +20,7 @@ var tests = []helper{
 	{"hidden", testHidden},
 	{"add version", testAddVersion},
 	{"hide", testHide},
+	{"siblings", testSiblings},
 }
 
 func TestEffects(t *testing.T) {
@@ -147,4 +148,37 @@ func testHide(t *testing.T, s *Effects) {
 	err = s.Hide(2, true)
 	require.Error(t, err)
 	require.Equal(t, ErrNotFound, err)
+}
+
+func testSiblings(t *testing.T, s *Effects) {
+	pid, err := s.Add(-1, -1, "user", "parent")
+	require.NoError(t, err)
+
+	expected := []int{pid}
+	for i := 0; i < 10; i++ {
+		id, err := s.Add(pid, 0, "user", "child")
+		require.NoError(t, err)
+		expected = append(expected, id)
+	}
+
+	for i := 0; i < 10; i++ {
+		_, err = s.Add(-1, -1, "user", "no")
+		require.NoError(t, err)
+	}
+
+	effects, err := s.PageSiblings(0, 50, pid)
+	require.NoError(t, err)
+
+	var ids []int
+	for _, e := range effects {
+		require.Len(t, e.Versions, 1)
+		if e.ID == pid {
+			require.Equal(t, "parent", e.Versions[0].Code)
+		} else {
+			require.Equal(t, "child", e.Versions[0].Code)
+		}
+		ids = append(ids, e.ID)
+	}
+
+	require.ElementsMatch(t, expected, ids)
 }

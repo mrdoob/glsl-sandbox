@@ -192,6 +192,14 @@ SELECT * FROM effects
 	LIMIT ? OFFSET ?
 `
 
+	sqlSelectEffectsSiblings = `
+SELECT * FROM effects
+	WHERE id = ? OR
+		parent = ?
+	ORDER BY modified_at DESC
+	LIMIT ? OFFSET ?
+`
+
 	sqlSelectVersions = `
 SELECT * FROM versions
 	WHERE effect = ?
@@ -335,7 +343,17 @@ func (s *Effects) Page(num int, size int, hidden bool) ([]Effect, error) {
 		query = sqlSelectEffectsAll
 	}
 
-	iter, err := s.db.Queryx(query, size, num*size)
+	return s.page(query, []interface{}{size, num * size})
+}
+
+func (s *Effects) PageSiblings(num int, size int, parent int) ([]Effect, error) {
+	query := sqlSelectEffectsSiblings
+
+	return s.page(query, []interface{}{parent, parent, size, num * size})
+}
+
+func (s *Effects) page(query string, qargs []interface{}) ([]Effect, error) {
+	iter, err := s.db.Queryx(query, qargs...)
 	if err != nil {
 		return nil, fmt.Errorf("could not get effects: %w", err)
 	}
