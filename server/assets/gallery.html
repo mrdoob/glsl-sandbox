@@ -104,6 +104,7 @@ gallery by <a href="http://twitter.com/thevaw">@thevaw</a> and <a href="http://t
 		{{ if $admin }}
 		{{ $name := checkboxID .ID }}
 		<div>
+		<a style="color:#009DE9;" href="/admin?parent={{ .ID }}">Children</a>
 		<label style="color:#009DE9" for="{{ $name }}">Hidden</label>
 		<input type="checkbox" id="{{ $name }}" name="{{ $name }}" {{ checked .Hidden }}>
 		<input type="hidden" name="effects" value="{{ .ID }}">
