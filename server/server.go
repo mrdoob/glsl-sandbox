@@ -214,11 +214,11 @@ type galleryData struct {
 	// IsPrevious is true if there is a previous page.
 	IsPrevious bool
 	// PreviousPage is the previous page number.
-	PreviousPage int
+	PreviousPage string
 	// IsNext is true if there is a next page.
 	IsNext bool
 	// NextPage is the next page number.
-	NextPage int
+	NextPage string
 	// Admin is true when accessing "/admin" path.
 	Admin bool
 }
@@ -233,7 +233,20 @@ func (s *Server) indexRender(c echo.Context, admin bool) error {
 		page = 0
 	}
 
-	p, err := s.effects.Page(page, perPage, admin)
+	parent := -1
+	if c.QueryParam("parent") != "" {
+		parent, err = strconv.Atoi(c.QueryParam("parent"))
+		if err != nil {
+			parent = -1
+		}
+	}
+
+	var p []store.Effect
+	if parent > 0 {
+		p, err = s.effects.PageSiblings(page, perPage, parent)
+	} else {
+		p, err = s.effects.Page(page, perPage, admin)
+	}
 	if err != nil {
 		return c.String(http.StatusInternalServerError, "error")
 	}
@@ -252,14 +265,23 @@ func (s *Server) indexRender(c echo.Context, admin bool) error {
 	if admin {
 		url = "/admin"
 	}
+
+	nextPage := fmt.Sprintf("%s?page=%d", url, page+1)
+	previousPage := fmt.Sprintf("%s?page=%d", url, page-1)
+
+	if parent > 0 {
+		nextPage = fmt.Sprintf("%s&parent=%d", nextPage, parent)
+		previousPage = fmt.Sprintf("%s&parent=%d", previousPage, parent)
+	}
+
 	d := galleryData{
 		Effects:      effects,
 		URL:          url,
 		Page:         page,
 		IsNext:       len(effects) == perPage,
-		NextPage:     page + 1,
+		NextPage:     nextPage,
 		IsPrevious:   page > 0,
-		PreviousPage: page - 1,
+		PreviousPage: previousPage,
 		Admin:        admin,
 	}
 
