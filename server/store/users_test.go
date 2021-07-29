@@ -1,7 +1,6 @@
 package store
 
 import (
-	"database/sql"
 	"errors"
 	"testing"
 	"time"
@@ -32,7 +31,7 @@ func TestUserAdd(t *testing.T) {
 
 	u, err := users.User("test")
 	require.Error(t, err)
-	require.True(t, errors.Is(err, sql.ErrNoRows))
+	require.True(t, errors.Is(err, ErrNotFound))
 	require.Equal(t, User{}, u)
 
 	err = users.Add(testUser)

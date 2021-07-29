@@ -46,8 +46,8 @@ func usage() {
 	fmt.Println(`Usage:
 	glsladmin list -- list users
 	glsladmin add <name> [<email>] -- add new user
-	glsladmin passwd <name> -- change user password
-`)
+	glsladmin passwd <name> -- change user password`)
+	fmt.Println()
 }
 
 func start() error {
