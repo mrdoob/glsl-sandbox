@@ -119,3 +119,27 @@ func TestUserUpdateFunc(t *testing.T) {
 	require.Error(t, err)
 	require.True(t, errors.Is(err, ErrNotFound))
 }
+
+func TestUserGetAll(t *testing.T) {
+	db, err := sqlx.Connect("sqlite", testDatabase)
+	require.NoError(t, err)
+
+	users, err := NewUsers(db)
+	require.NoError(t, err)
+
+	err = users.Add(User{Name: "one"})
+	require.NoError(t, err)
+
+	err = users.Add(User{Name: "two"})
+	require.NoError(t, err)
+
+	list, err := users.Users()
+	require.NoError(t, err)
+
+	var names []string
+	for _, u := range list {
+		names = append(names, u.Name)
+	}
+
+	require.ElementsMatch(t, []string{"one", "two"}, names)
+}

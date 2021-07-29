@@ -74,6 +74,10 @@ func (s *Users) Init() error {
 }
 
 const (
+	sqlSelectUsers = `
+SELECT * FROM users
+`
+
 	sqlSelectUser = `
 SELECT * FROM users
 	WHERE name = ?
@@ -114,6 +118,9 @@ func (s *Users) User(name string) (User, error) {
 	r := s.db.QueryRowx(sqlSelectUser, name)
 	err := r.StructScan(&u)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return User{}, ErrNotFound
+		}
 		return User{}, fmt.Errorf("could not get user: %w", err)
 	}
 
@@ -174,6 +181,34 @@ func (s *Users) UpdateFunc(name string, f func(User) User) error {
 		}
 		return nil
 	})
+}
+
+func (s *Users) Users() ([]User, error) {
+	rows, err := s.db.Queryx(sqlSelectUsers)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrNotFound
+		}
+		return nil, fmt.Errorf("could not get users: %w", err)
+	}
+
+	var users []User
+	for rows.Next() {
+		var u User
+		err = rows.StructScan(&u)
+		if err != nil {
+			return nil, fmt.Errorf("could not read user: %w", err)
+		}
+		users = append(users, u)
+	}
+	if rows.Err() != nil {
+		if errors.Is(rows.Err(), sql.ErrNoRows) {
+			return nil, ErrNotFound
+		}
+		return nil, fmt.Errorf("could not get users: %w", rows.Err())
+	}
+
+	return users, nil
 }
 
 func (s *Users) transaction(f func(*sqlx.Tx) error) error {
