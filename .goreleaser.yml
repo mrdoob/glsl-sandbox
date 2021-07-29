@@ -14,6 +14,17 @@ builds:
       - windows
       - darwin
     main: ./server/cmd/glslsandbox
+    binary: glslsandbox
+    id: glslsandbox
+  - env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - windows
+      - darwin
+    main: ./server/cmd/glsladmin
+    binary: glsladmin
+    id: glsladmin
 archives:
   - replacements:
       darwin: Darwin
