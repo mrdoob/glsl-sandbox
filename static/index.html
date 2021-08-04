@@ -63,9 +63,9 @@
 		<script src="js/codemirror.js"></script>
 		<script src="js/glsl.js"></script>
 
-		<script id="example" type="x-shader/x-fragment">precision mediump float;
+		<script id="example" type="x-shader/x-fragment">#extension GL_OES_standard_derivatives : enable
 
-#extension GL_OES_standard_derivatives : enable
+precision mediump float;
 
 uniform float time;
 uniform vec2 mouse;
