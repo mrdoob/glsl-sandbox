@@ -3,7 +3,7 @@
 	<head>
 		<title>GLSL Sandbox</title>
 		<meta charset="utf-8">
-		<meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
 		<style>
 
 			body {
@@ -307,7 +307,7 @@ void main( void ) {
 					alert("WebGL not supported, but code will be shown.");
 
 				} else {
-					
+
 					// enable dFdx, dFdy, fwidth
 					gl.getExtension('OES_standard_derivatives');
 
@@ -360,7 +360,7 @@ void main( void ) {
 						event.preventDefault();
 					}
 				}, false );
-				
+
 				if (gl) {
 
 					var surfaceMouseDown = function ( event ) {
@@ -396,7 +396,7 @@ void main( void ) {
 					canvas.addEventListener( 'contextmenu', noContextMenu, false);
 					panButton.addEventListener( 'contextmenu', noContextMenu, false);
 				}
-				
+
 				var clientXLast, clientYLast;
 
 				document.addEventListener( 'mousemove', function ( event ) {
@@ -413,10 +413,10 @@ void main( void ) {
 					stopHideUI();
 
 					var codeElement, dx, dy;
-					
+
 					parameters.mouseX = clientX / window.innerWidth;
 					parameters.mouseY = 1 - clientY / window.innerHeight;
-						
+
 					if (resizer.isResizing) {
 
 						resizer.currentWidth = Math.max(Math.min(clientX - resizer.offsetMouseX, resizer.maxWidth), resizer.minWidth);
@@ -526,9 +526,9 @@ void main( void ) {
 				if (gl) {
 
 					surface.width = surface.height * parameters.screenWidth / parameters.screenHeight;
-					
+
 					var halfWidth = surface.width * 0.5, halfHeight = surface.height * 0.5;
-					
+
 					gl.bindBuffer( gl.ARRAY_BUFFER, surface.buffer );
 					gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( [
 						surface.centerX - halfWidth, surface.centerY - halfHeight,
@@ -551,11 +551,11 @@ void main( void ) {
 			}
 
 			function compile() {
-			
+
 				if (!gl) {
-				
+
 					if (!getWebGL) {
-					
+
 						getWebGL = true;
 						compileButton.addEventListener( 'click', function ( event ) {
 
@@ -566,10 +566,10 @@ void main( void ) {
 						compileButton.style.color = '#ff0000';
 						compileButton.textContent = 'WebGL not supported!';
 						set_save_button('hidden');
-						
+
 					}
 					return;
-					
+
 				}
 
 				var program = gl.createProgram();
@@ -645,7 +645,7 @@ void main( void ) {
 			}
 
 			function compileScreenProgram() {
-			
+
 				if (!gl) { return; }
 
 				var program = gl.createProgram();
@@ -749,7 +749,7 @@ void main( void ) {
 
 
 			//
-			
+
 			function htmlEncode(str){
 
 				return String(str)
@@ -764,7 +764,7 @@ void main( void ) {
 			//
 
 			function createShader( src, type ) {
-			
+
 				var shader = gl.createShader( type );
 				var line, lineNum, lineError, index = 0, indexEnd;
 
@@ -782,7 +782,7 @@ void main( void ) {
 				if ( !gl.getShaderParameter( shader, gl.COMPILE_STATUS ) ) {
 
 					var error = gl.getShaderInfoLog( shader );
-					
+
 					// Remove trailing linefeed, for FireFox's benefit.
 					while ((error.length > 1) && (error.charCodeAt(error.length - 1) < 32)) {
 						error = error.substring(0, error.length - 1);
@@ -860,11 +860,11 @@ void main( void ) {
 				computeSurfaceCorners();
 
 				if (gl) {
-				
+
 					gl.viewport( 0, 0, canvas.width, canvas.height );
 
 					createRenderTargets();
-					
+
 				}
 			}
 
@@ -895,7 +895,7 @@ void main( void ) {
 
 				gl.bindBuffer( gl.ARRAY_BUFFER, surface.buffer );
 				gl.vertexAttribPointer( surface.positionAttribute, 2, gl.FLOAT, false, 0, 0 );
-				
+
 				gl.bindBuffer( gl.ARRAY_BUFFER, buffer );
 				gl.vertexAttribPointer( vertexPosition, 2, gl.FLOAT, false, 0, 0 );
 
@@ -918,7 +918,7 @@ void main( void ) {
 
 				gl.bindBuffer( gl.ARRAY_BUFFER, buffer );
 				gl.vertexAttribPointer( screenVertexPosition, 2, gl.FLOAT, false, 0, 0 );
-				
+
 				gl.activeTexture( gl.TEXTURE1 );
 				gl.bindTexture( gl.TEXTURE_2D, frontTarget.texture );
 

@@ -4,63 +4,86 @@
 	<head>
 		<title>GLSL Sandbox Gallery</title>
 		<meta charset="utf-8">
-		<meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
 		<style>
 			body {
 				background-color: #000000;
-				font: 13px Tahoma, Arial, Helvetica, sans-serif;
-				margin: 3em 4em;
 				color: #888;
+				font: 13px Arial, Helvetica, sans-serif;
+				line-height: 1.6;
+				padding: 40px;
 			}
-			a{
-				color: #aaa;
+			a {
+				color: #009DE9;
 				text-decoration: none;
 			}
-			a:hover{
+			a:hover {
+				color: #FFF;
+			}
+			h1 {
+				color: #FFF;
+				margin-top: 0px;
+				margin-bottom: 20px;
+			}
+			h1, h1 a {
+				color: #FFF;
+				font: 28px Arial, Helvetica, sans-serif;
+			}
+			button {
+				background-color: transparent;
+				border: none;
 				color: #009DE9;
+				cursor: pointer;
+				padding: 4px 8px;
+				border: 1px solid #009DE9;
+				border-radius: 4px;
+				text-transform: uppercase;
 			}
-			
-			h1, h1 a, h2{
-				color: #009DE9;
-				font: 28px Tahoma, Arial, Helvetica, sans-serif;
-				font-weight: normal;
-				margin-bottom: 7px;
+			button:hover {
+				color: #FFF;
+				border-color: #FFF;
 			}
-			h2{ 
-				font-size: 22px;
-				margin-top: 2em;
+			#github {
+				fill: #009DE9;
+				margin-left: 8px;
+				margin-bottom: -2px;
 			}
-			#gallery{
+				#github:hover {
+					fill: #FFF
+				}
+			#gallery {
 				width: 100%;
-				margin-top: 4em;
+				margin-top: 2em;
+				margin-bottom: 2em;
 			}
-			#gallery>a{
+			#gallery>a {
 				border: none;
 			}
-			#gallery img{
-				margin-right: 2em;
+			#gallery img {
 				width: 200px;
 				height: 100px;
-				border: 1px solid #212121;
+				background-color: #222;
+				border: 1px solid #222;
+				border-radius: 4px;
 			}
-			#gallery img:hover{
-				box-shadow: 0px 0px 24px 10px #263D65;
-				border: 1px solid #316FAE;
+			#gallery img:hover {
+				border: 1px solid #FFF;
 			}
 			.effect {
 				display: inline-block;
-				margin-bottom: 2em;
+				margin-right: 4px;
+				margin-bottom: 4px;
 			}
 			form {
 				margin-bottom: 2em;
 			}
-			label{
+			label {
 				margin-top: 1.4em;
 				margin-bottom: 0.6em;
 				font-size: 14px;
 				color: #009DE9;
 			}
-			input, textarea{
+			input, textarea {
 				background: #222;
 				font-size: 14px;
 				color: #ccc;
@@ -69,7 +92,7 @@
 				outline: none;
 				cursor: pointer;
 			}
-			input[type=submit]:hover{
+			input[type=submit]:hover {
 				color: #009DE9;
 			}
 		</style>
@@ -77,13 +100,12 @@
 	</head>
 	<body>
 
-<div id="header">		
-<h1><a href="/">GLSL Sandbox</a></h1>
-<a href="/e">Create new effect!</a> &nbsp;&nbsp;/&nbsp;
-<a href="https://github.com/mrdoob/glsl-sandbox">github</a> &nbsp;&nbsp;/&nbsp;
-gallery by <a href="http://twitter.com/thevaw">@thevaw</a> and <a href="http://twitter.com/feiss">@feiss</a> &nbsp;/&nbsp; editor by <a href="http://twitter.com/mrdoob">@mrdoob</a>, <a href="http://twitter.com/mrkishi">@mrkishi</a>, <a href="http://twitter.com/p01">@p01</a>, <a href="http://twitter.com/alteredq">@alteredq</a>, <a href="http://twitter.com/kusmabite">@kusmabite</a> and <a href="http://twitter.com/emackey">@emackey</a>
-</div>
-
+<h1><a href="/" style="text-transform:uppercase">GLSL Sandbox</a> <a href="https://github.com/mrdoob/glsl-sandbox"><svg id="github" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-4.466 19.59c-.405.078-.534-.171-.534-.384v-2.195c0-.747-.262-1.233-.55-1.481 1.782-.198 3.654-.875 3.654-3.947 0-.874-.312-1.588-.823-2.147.082-.202.356-1.016-.079-2.117 0 0-.671-.215-2.198.82-.64-.18-1.324-.267-2.004-.271-.68.003-1.364.091-2.003.269-1.528-1.035-2.2-.82-2.2-.82-.434 1.102-.16 1.915-.077 2.118-.512.56-.824 1.273-.824 2.147 0 3.064 1.867 3.751 3.645 3.954-.229.2-.436.552-.508 1.07-.457.204-1.614.557-2.328-.666 0 0-.423-.768-1.227-.825 0 0-.78-.01-.055.487 0 0 .525.246.889 1.17 0 0 .463 1.428 2.688.944v1.489c0 .211-.129.459-.528.385-3.18-1.057-5.472-4.056-5.472-7.59 0-4.419 3.582-8 8-8s8 3.581 8 8c0 3.533-2.289 6.531-5.466 7.59z"/></svg></a></h1>
+gallery by <a href="https://twitter.com/thevaw">@thevaw</a>, <a href="https://twitter.com/feiss">@feiss</a> and
+<a href="https://twitter.com/mrdoob">@mrdoob</a><br/>
+editor by <a href="https://twitter.com/mrdoob">@mrdoob</a>, <a href="https://twitter.com/mrkishi">@mrkishi</a>, <a href="https://twitter.com/p01">@p01</a>, <a href="https://twitter.com/alteredq">@alteredq</a>, <a href="https://twitter.com/kusmabite">@kusmabite</a> and <a href="https://twitter.com/emackey">@emackey</a>
+<br/><br/>
+<a href="/e"><button>new shader</button></a>
 <div id="gallery">
 
 {{ if .Admin }}
@@ -122,7 +144,7 @@ gallery by <a href="http://twitter.com/thevaw">@thevaw</a> and <a href="http://t
 
 <div id="paginate">
 {{ if .IsPrevious }}
-<a href='{{ .PreviousPage }}'>Previous page</a>
+<a href='{{ .PreviousPage }}'><button>Previous page</button></a>
 
 {{ if .IsNext }}
 &nbsp;&nbsp;
@@ -131,7 +153,7 @@ gallery by <a href="http://twitter.com/thevaw">@thevaw</a> and <a href="http://t
 {{ end }}
 
 {{ if .IsNext }}
-<a href='{{ .NextPage }}'>Next page</a>
+<a href='{{ .NextPage }}'><button>Next page</button></a>
 {{ end }}
 </div>
 
