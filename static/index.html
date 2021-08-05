@@ -169,6 +169,36 @@ void main( void ) {
 			surface = { centerX: 0, centerY: 0, width: 1, height: 1, isPanning: false, isZooming: false, lastX: 0, lastY: 0 },
 			frontTarget, backTarget, screenProgram, getWebGL, resizer = {}, compileOnChangeCode = true;
 
+			var customTextures, textureCache = {}, loadCustomTexture = function ( url ) {
+				if (!textureCache[ url ]) {
+
+					var tex = gl.createTexture();
+					var img = new Image();
+
+					// assume cross-domain image
+					img.crossOrigin = 'anonymous';
+
+					img.onload = function () {
+						gl.bindTexture(gl.TEXTURE_2D, tex);
+			
+						// assume NPOT texture
+						gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+						gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+						gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
+						gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
+
+						gl.bindTexture(gl.TEXTURE_2D, null);
+					};
+
+					img.src = url;
+
+					textureCache[ url ] = tex;
+				}
+
+				return textureCache[ url ];
+			};
+
 			init();
 			if (gl) { animate(); }
 
@@ -308,6 +338,8 @@ void main( void ) {
 
 				} else {
 					
+					gl.pixelStorei( gl.UNPACK_FLIP_Y_WEBGL, true );
+
 					// enable dFdx, dFdy, fwidth
 					gl.getExtension('OES_standard_derivatives');
 
@@ -630,6 +662,17 @@ void main( void ) {
 				cacheUniformLocation( program, 'backbuffer' );
 				cacheUniformLocation( program, 'surfaceSize' );
 
+				// Custom textures
+
+				customTextures = {};
+
+				var matches, regexp = /sampler2D\s+(\w+)\s*;\s*\/\/\s*([^\s]+)/g;
+				while (matches = regexp.exec (fragment)) {
+					var name = matches[ 1 ];
+					cacheUniformLocation( program, name );
+					customTextures[ name ] = matches[ 2 ];
+				}
+
 				// Load program into GPU
 
 				gl.useProgram( currentProgram );
@@ -901,6 +944,18 @@ void main( void ) {
 
 				gl.activeTexture( gl.TEXTURE0 );
 				gl.bindTexture( gl.TEXTURE_2D, backTarget.texture );
+
+				// Load custom textures
+
+				var sampler = 1;
+				for (var samplerName in customTextures) {
+					gl.uniform1i( currentProgram.uniformsCache[ samplerName ], sampler );
+
+					gl.activeTexture( gl[ 'TEXTURE' + sampler ] );
+					gl.bindTexture( gl.TEXTURE_2D, loadCustomTexture( customTextures[ samplerName ] ) );
+
+					sampler++;
+				}
 
 				// Render custom shader to front buffer
 
