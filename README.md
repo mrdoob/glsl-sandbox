@@ -10,7 +10,7 @@
 ```
 $ git clone git@github.com:<your user>/glsl-sandbox
 $ cd glsl-sandbox
-$ git checkout -b <feature name> go
+$ git checkout -b <feature name>
 ```
 
 * Download and uncompress test data:
