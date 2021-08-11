@@ -132,7 +132,7 @@ void main( void ) {
 
 			initialize_helper();
 
-			var compressor=initialize_compressor();
+			var compressor = initialize_compressor();
 
 			// Greetings to Iq/RGBA! ;)
 
@@ -144,7 +144,8 @@ void main( void ) {
 			frontTarget, backTarget, screenProgram, getWebGL, resizer = {}, compileOnChangeCode = true;
 
 			init();
-			if (gl) { animate(); }
+
+			if ( gl ) animate();
 
 			function init() {
 
@@ -264,7 +265,7 @@ void main( void ) {
 
 				try {
 
-					gl = canvas.getContext( 'experimental-webgl', { preserveDrawingBuffer: true } );
+					gl = canvas.getContext( 'webgl', { preserveDrawingBuffer: true } );
 
 				} catch( error ) { }
 
