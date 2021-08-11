@@ -134,14 +134,6 @@ void main( void ) {
 
 			var compressor=initialize_compressor();
 
-			// Get older browsers safely through init code, so users can read the
-			// message about how to download newer browsers.
-			if (!Date.now) {
-				Date.now = function() {
-					return +new Date();
-				};
-			}
-
 			// Greetings to Iq/RGBA! ;)
 
 			var quality = 2, quality_levels = [ 0.5, 1, 2, 4, 8 ];
@@ -156,17 +148,9 @@ void main( void ) {
 
 			function init() {
 
-				if (!document.addEventListener) {
-					document.location = 'http://get.webgl.org/';
-					return;
-				}
-
 				canvas = document.createElement( 'canvas' );
 				canvas.style.display = 'block';
 				document.body.appendChild( canvas );
-
-				//
-
 
 				//
 
