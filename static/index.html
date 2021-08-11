@@ -134,24 +134,6 @@ void main( void ) {
 
 			var compressor=initialize_compressor();
 
-			if ( !window.requestAnimationFrame ) {
-
-				window.requestAnimationFrame = ( function() {
-
-					return window.webkitRequestAnimationFrame ||
-						window.mozRequestAnimationFrame ||
-						window.oRequestAnimationFrame ||
-						window.msRequestAnimationFrame ||
-						function ( callback, element ) {
-
-							window.setTimeout( callback, 1000 / 60 );
-
-						};
-
-				} )();
-
-			}
-
 			// Get older browsers safely through init code, so users can read the
 			// message about how to download newer browsers.
 			if (!Date.now) {
