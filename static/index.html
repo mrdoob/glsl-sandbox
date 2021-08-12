@@ -848,10 +848,11 @@ void main( void ) {
 
 				if ( delta > 17 ) {
 
+					goodframes = 0;
 					quality += 0.1;
 					onWindowResize();
 
-				} else {
+				} else if ( quality > 1 ) {
 
 					goodframes ++;
 
