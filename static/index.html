@@ -143,7 +143,7 @@ void main( void ) {
 
 			// Greetings to Iq/RGBA! ;)
 
-			var quality = 1;
+			var quality = 2;
 			var toolbar, showButton, timeButton, compileButton, panButton, fullscreenButton, compileTimer, errorLines = [];
 			var code, canvas, gl, buffer, currentProgram, vertexPosition, screenVertexPosition,
 			parameters = { startTime: Date.now(), time: 0, mouseX: 0.5, mouseY: 0.5, screenWidth: 0, screenHeight: 0 },
@@ -863,7 +863,7 @@ void main( void ) {
 
 					goodframes ++;
 
-					if ( goodframes > 500 ) {
+					if ( goodframes > 100 ) {
 
 						goodframes = 0;
 						quality -= 0.1;
