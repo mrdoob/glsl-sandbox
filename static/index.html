@@ -6,6 +6,12 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 		<style>
 
+			* {
+
+				box-sizing: border-box;
+
+			}
+
 			body {
 
 				background-color: #000000;
@@ -152,14 +158,17 @@ void main( void ) {
 
 				canvas = document.createElement( 'canvas' );
 				canvas.style.display = 'block';
+				canvas.style.width = '100%';
+				canvas.style.height = '100%';
 				document.body.appendChild( canvas );
 
 				//
 
 				toolbar = document.createElement( 'div' );
 				toolbar.style.position = 'absolute';
-				toolbar.style.top = '25px';
-				toolbar.style.left = '25px';
+				toolbar.style.top = '0px';
+				toolbar.style.padding = '25px';
+				toolbar.style.width = '100%';
 				document.body.appendChild( toolbar );
 
 				var rightside = document.createElement( 'div' );
@@ -792,8 +801,6 @@ void main( void ) {
 				var isMaxWidth = ((resizer.currentWidth === resizer.maxWidth) || (resizer.currentWidth === resizer.minWidth)),
 					isMaxHeight = ((resizer.currentHeight === resizer.maxHeight) || (resizer.currentHeight === resizer.minHeight));
 
-				toolbar.style.width = window.innerWidth - 47 + 'px';
-
 				resizer.isResizing = false;
 				resizer.maxWidth = window.innerWidth - 75;
 				resizer.maxHeight = window.innerHeight - 125;
@@ -816,8 +823,6 @@ void main( void ) {
 				canvas.width = ( window.devicePixelRatio * window.innerWidth ) / quality;
 				canvas.height = ( window.devicePixelRatio * window.innerHeight ) / quality;
 
-				canvas.style.width = window.innerWidth + 'px';
-				canvas.style.height = window.innerHeight + 'px';
 
 				parameters.screenWidth = canvas.width;
 				parameters.screenHeight = canvas.height;
