@@ -13,12 +13,13 @@
 				background-color: #000000;
 				font: 12px Arial, Helvetica, sans-serif;
 				color: #888;
-				padding: 20px;
+				margin: 20px;
 			}
 			h2 {
 				font-size: 12px;
 				text-transform: uppercase;
 				font-weight: normal;
+				margin: 0px;
 				padding-bottom: 20px;
 			}
 			a, a:visited {
@@ -47,17 +48,8 @@
 				text-align: center;
 				clear: both;
 			}
-			.textInput {
-				display: block;
-				width: 49%;
-				float: left;
-			}
-			.spacer {
-				margin-left: 10px;
-			}
 			#diffoutput {
 				width: 100%;
-				margin-top: 1em;
 			}
 			/* give jsdiffview the dark theme */
 			table.diff {
@@ -100,7 +92,7 @@
 		</style>
 	</head>
 	<body>
-		<h2 id="subtitle">diff</h2>
+		<h2 id="subtitle"></h2>
 		<div id="diffoutput">Loading...</div>
 		<script>
 			var leftSide = { id: '', code: '', name: '', parent: null, loaded: false },
@@ -113,15 +105,15 @@
 				var opcodes = sm.get_opcodes();
 				var diffoutputdiv = document.getElementById("diffoutput");
 				diffoutputdiv.innerHTML = "";
-				diffoutputdiv.appendChild(diffview.buildView({
+				var table = diffview.buildView({
 					baseTextLines: leftText,
 					newTextLines: rightText,
 					opcodes: opcodes,
-					baseTextName: leftSide.name,
-					newTextName: rightSide.name,
 					contextSize: null,
 					viewType: 1 // sideBySide: 0, viewInline: 1
-				}));
+				});
+				table.removeChild(table.firstChild); // not needed
+				diffoutputdiv.appendChild(table);
 			}
 
 			function computeNames() {
@@ -170,8 +162,6 @@
 				pos = hash.indexOf('-vs-'),
 				newLeftID = null,
 				newRightID = null;
-
-			document.getElementById('subtitle').innerHTML = 'diff';
 
 			if ((pos < 2) || ((hash.length - pos) < 5)) {
 				leftSide.loaded = rightSide.loaded = false;
