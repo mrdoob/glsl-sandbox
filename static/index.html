@@ -761,14 +761,14 @@ void main( void ) {
 
 				if ( !gl.getShaderParameter( shader, gl.COMPILE_STATUS ) ) {
 
+					showCode();
+
 					var error = gl.getShaderInfoLog( shader );
 
 					// Remove trailing linefeed, for FireFox's benefit.
 					while ((error.length > 1) && (error.charCodeAt(error.length - 1) < 32)) {
 						error = error.substring(0, error.length - 1);
 					}
-
-					showCode();
 
 					compileButton.title = error;
 					console.error( error );
