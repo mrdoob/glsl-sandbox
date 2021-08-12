@@ -137,8 +137,8 @@ void main( void ) {
 			// Greetings to Iq/RGBA! ;)
 
 			var quality = 2, quality_levels = [ 0.5, 1, 2, 4, 8 ];
-			var toolbar, compileButton, fullscreenButton, compileTimer, errorLines = [];
-			var code, canvas, gl, buffer, currentProgram, vertexPosition, screenVertexPosition, panButton, timeButton,
+			var toolbar, showButton, timeButton, compileButton, panButton, fullscreenButton, compileTimer, errorLines = [];
+			var code, canvas, gl, buffer, currentProgram, vertexPosition, screenVertexPosition,
 			parameters = { startTime: Date.now(), time: 0, mouseX: 0.5, mouseY: 0.5, screenWidth: 0, screenHeight: 0 },
 			surface = { centerX: 0, centerY: 0, width: 1, height: 1, isPanning: false, isZooming: false, lastX: 0, lastY: 0 },
 			frontTarget, backTarget, screenProgram, getWebGL, resizer = {}, compileOnChangeCode = true;
@@ -194,31 +194,14 @@ void main( void ) {
 				button.href = '/';
 				rightside.appendChild( button );
 
-				var button = document.createElement( 'button' );
-				button.textContent = 'hide code';
-				button.addEventListener( 'click', function ( event ) {
+				showButton = document.createElement( 'button' );
+				showButton.textContent = 'show code';
+				showButton.addEventListener( 'click', function () {
 
-					if ( isCodeVisible() ) {
-
-						button.textContent = 'show code';
-						code.getWrapperElement().style.display = 'none';
-						compileButton.style.visibility = 'hidden';
-						set_save_button('hidden');
-						set_parent_button('hidden');
-						stopHideUI();
-
-					} else {
-
-						button.textContent = 'hide code';
-						code.getWrapperElement().style.display = '';
-						compileButton.style.visibility = 'visible';
-						set_save_button('visible');
-						set_parent_button('visible');
-
-					}
+					isCodeVisible() ? hideCode() : showCode();
 
 				}, false );
-				toolbar.appendChild( button );
+				toolbar.appendChild( showButton );
 
 				timeButton = document.createElement( 'button' );
 				timeButton.textContent = '0:00.00';
@@ -304,7 +287,6 @@ void main( void ) {
 						}
 					}
 				});
-				code.getWrapperElement().style.display = '';
 
 				resizer.offsetMouseX = 0;
 				resizer.offsetMouseY = 0;
@@ -440,10 +422,37 @@ void main( void ) {
 
 				compileScreenProgram();
 
+				// show code when is new effect
+
+				location.hash === '' ? showCode() : hideCode();
+
+			}
+
+			function showCode() {
+
+				showButton.textContent = 'hide code';
+				code.getWrapperElement().style.visibility = 'visible';
+				compileButton.style.visibility = 'visible';
+				set_save_button('visible');
+				set_parent_button('visible');
+
+			}
+
+			function hideCode() {
+
+				showButton.textContent = 'show code';
+				code.getWrapperElement().style.visibility = 'hidden';
+				compileButton.style.visibility = 'hidden';
+				set_save_button('hidden');
+				set_parent_button('hidden');
+				stopHideUI();
+
 			}
 
 			function isCodeVisible() {
-				return code && code.getWrapperElement().style.display !== 'none';
+
+				return code && code.getWrapperElement().style.visibility === 'visible';
+
 			}
 
 			var hideUITimer;
@@ -558,6 +567,8 @@ void main( void ) {
 
 				if ( !gl.getProgramParameter( program, gl.LINK_STATUS ) ) {
 
+					showCode();
+
 					var error = gl.getProgramInfoLog( program );
 
 					compileButton.title = error;
@@ -631,6 +642,8 @@ void main( void ) {
 				gl.linkProgram( program );
 
 				if ( !gl.getProgramParameter( program, gl.LINK_STATUS ) ) {
+
+					showCode();
 
 					console.error( 'VALIDATE_STATUS: ' + gl.getProgramParameter( program, gl.VALIDATE_STATUS ), 'ERROR: ' + gl.getError() );
 
@@ -754,6 +767,8 @@ void main( void ) {
 					while ((error.length > 1) && (error.charCodeAt(error.length - 1) < 32)) {
 						error = error.substring(0, error.length - 1);
 					}
+
+					showCode();
 
 					compileButton.title = error;
 					console.error( error );
