@@ -11,13 +11,9 @@
   font-size: 14px;
   font-weight: bold;
   visibility: visible;
-  
+
   /* transition between transparent and semi-transparent black on hover */
   transition: background-color 500ms;
-  -webkit-transition: background-color 500ms;
-  -o-transition: background-color 500ms;
-  -moz-transition: background-color 500ms;
-  -ms-transition: background-color 500ms;
 }
 
 .CodeMirror:hover {
