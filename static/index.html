@@ -250,7 +250,7 @@ void main( void ) {
 				toolbar.appendChild( select );
 
 				compileButton = document.createElement( 'button' );
-				compileButton.textContent = 'compile';
+				compileButton.textContent = 'compiled';
 				compileButton.addEventListener( 'click', function ( event ) {
 
 					compile();
@@ -565,7 +565,7 @@ void main( void ) {
 
 					console.error( 'VALIDATE_STATUS: ' + gl.getProgramParameter( program, gl.VALIDATE_STATUS ), 'ERROR: ' + gl.getError() );
 					compileButton.style.color = '#ff0000';
-					compileButton.textContent = 'compiled with errors';
+					compileButton.textContent = 'errors';
 
 					set_save_button('hidden');
 
@@ -583,7 +583,7 @@ void main( void ) {
 				currentProgram = program;
 
 				compileButton.style.color = '#00ff00';
-				compileButton.textContent = 'compiled successfully';
+				compileButton.textContent = 'compiled';
 
 				set_save_button('visible');
 
@@ -759,7 +759,7 @@ void main( void ) {
 					console.error( error );
 
 					compileButton.style.color = '#ff0000';
-					compileButton.textContent = 'compiled with errors';
+					compileButton.textContent = 'errors';
 
 					set_save_button('hidden');
 
