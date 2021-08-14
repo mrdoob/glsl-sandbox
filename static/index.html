@@ -7,31 +7,24 @@
 		<style>
 
 			* {
-
 				box-sizing: border-box;
-
 			}
 
 			body {
-
 				background-color: #000000;
 				margin: 0;
 				padding: 0;
-				overflow: hidden;
-
 			}
 
 			button, a, a:visited {
-
 				padding: 8px 12px;
 
-				border: solid 1px #222;
+				border: 0px;
 				border-radius: 5px;
 				margin-right: 5px;
 
-				color: #ffffff;
+				color: #FFFFFF;
 				background-color: #000000;
-				opacity: 0.5;
 
 				font-family: monospace;
 				font-size: 11px;
@@ -40,21 +33,20 @@
 				text-decoration: none;
 
 				text-transform: uppercase;
-
 			}
 
 			button:hover, a:hover {
-
-				opacity: 1;
-				border: solid 1px #FFF;
-
+				background-color: #FFFFFF;
+				color: #000000;
 			}
 
 			option {
-
 				color: #ffffff;
 				background-color: #000000;
+			}
 
+			#toolbar {
+				transition: opacity 1s;
 			}
 
 		</style>
@@ -166,6 +158,7 @@ void main( void ) {
 				//
 
 				toolbar = document.createElement( 'div' );
+				toolbar.id = 'toolbar';
 				toolbar.style.position = 'absolute';
 				toolbar.style.top = '0px';
 				toolbar.style.padding = '25px';
@@ -453,7 +446,7 @@ void main( void ) {
 
 				stopHideUITimer();
 				if (!isUIHidden && !isCodeVisible())
-					hideUITimer = window.setTimeout(onHideUITimer, 1000 * 5 );
+					hideUITimer = window.setTimeout(onHideUITimer, 1000 * 3 );
 
 				function onHideUITimer() {
 
@@ -461,7 +454,7 @@ void main( void ) {
 					if (!isUIHidden && !isCodeVisible()) {
 
 						isUIHidden = true;
-						toolbar.style.display = 'none';
+						toolbar.style.opacity = '0';
 						document.body.style.cursor = 'none';
 					}
 				}
@@ -481,7 +474,7 @@ void main( void ) {
 				if (isUIHidden) {
 
 					isUIHidden = false;
-					toolbar.style.display = '';
+					toolbar.style.opacity = '1';
 					document.body.style.cursor = '';
 				}
 				startHideUITimer();
