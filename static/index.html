@@ -47,6 +47,22 @@
 				color: #000000;
 			}
 
+			img {
+				padding: 4px;
+				border: 0px;
+				border-radius: 5px;
+				margin-right: 5px;
+
+				background-color: #000000;
+				vertical-align: middle;
+
+				cursor: pointer;
+			}
+
+				img:hover {
+					background-color: #FFFFFF;
+				}
+
 			option {
 				color: #ffffff;
 				background-color: #000000;
@@ -179,8 +195,8 @@ void main( void ) {
 				panButton.title = "Pan: left-drag, Zoom: right-drag. Use 'hide code' for a large pan/zoom area.";
 				rightside.appendChild( panButton );
 
-				fullscreenButton = document.createElement( 'button' );
-				fullscreenButton.textContent = 'fullscreen';
+				fullscreenButton = document.createElement( 'img' );
+				fullscreenButton.src = 'img/fullscreen.svg';
 				fullscreenButton.title = 'Press F11 to enter or leave fullscreen mode';
 				fullscreenButton.addEventListener( 'click', function ( event ) {
 
@@ -197,6 +213,7 @@ void main( void ) {
 				rightside.appendChild( fullscreenButton );
 
 				var button = document.createElement( 'a' );
+				button.style.marginRight = '0px';
 				button.textContent = 'gallery';
 				button.href = '/';
 				rightside.appendChild( button );

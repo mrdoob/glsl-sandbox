@@ -167,6 +167,7 @@ func (s *Server) routes() {
 
 	s.echo.Static("/thumbs", filepath.Join(s.dataPath, pathThumbs))
 	s.echo.Static("/css", "./server/assets/css")
+	s.echo.Static("/img", "./server/assets/img")
 	s.echo.Static("/js", "./server/assets/js")
 	s.echo.File("/diff", "./server/assets/diff.html")
 
