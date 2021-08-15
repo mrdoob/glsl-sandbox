@@ -16,7 +16,7 @@
 				padding: 0;
 			}
 
-			button, a, a:visited {
+			button, select, a, a:visited {
 				padding: 8px 12px;
 
 				border: 0px;
@@ -35,7 +35,7 @@
 				text-transform: uppercase;
 			}
 
-			button:hover, a:hover {
+			button:hover, select:hover, a:hover {
 				background-color: #FFFFFF;
 				color: #000000;
 			}
@@ -135,7 +135,7 @@ void main( void ) {
 
 			// Greetings to Iq/RGBA! ;)
 
-			var quality = 1;
+			var quality = 2, quality_levels = [ 1, 2, 4, 8 ];
 			var toolbar, showButton, timeButton, compileButton, panButton, fullscreenButton, compileTimer, errorLines = [];
 			var code, canvas, gl, buffer, currentProgram, vertexPosition, screenVertexPosition,
 			parameters = { startTime: Date.now(), time: 0, mouseX: 0.5, mouseY: 0.5, screenWidth: 0, screenHeight: 0 },
@@ -144,7 +144,7 @@ void main( void ) {
 
 			init();
 
-			if ( gl ) requestAnimationFrame( animate );
+			if ( gl ) animate();
 
 			function init() {
 
@@ -215,6 +215,26 @@ void main( void ) {
 
 				}, false );
 				toolbar.appendChild( timeButton );
+
+				var select = document.createElement( 'select' );
+
+				for ( var i = 0; i < quality_levels.length; i ++ ) {
+
+					var option = document.createElement( 'option' );
+					option.textContent = quality_levels[ i ];
+					if ( quality_levels[ i ] == quality ) option.selected = true;
+					select.appendChild( option );
+
+				}
+
+				select.addEventListener( 'change', function ( event ) {
+
+					quality = quality_levels[ event.target.selectedIndex ];
+					onWindowResize();
+
+				}, false );
+
+				toolbar.appendChild( select );
 
 				compileButton = document.createElement( 'button' );
 				compileButton.textContent = 'compiled';
@@ -812,10 +832,8 @@ void main( void ) {
 				code.getWrapperElement().style.width = resizer.currentWidth + 'px';
 				code.getWrapperElement().style.height = resizer.currentHeight + 'px';
 
-				// console.log( 'quality:', quality );
-
-				canvas.width = ( window.devicePixelRatio * window.innerWidth ) / quality;
-				canvas.height = ( window.devicePixelRatio * window.innerHeight ) / quality;
+				canvas.width = window.innerWidth / quality;
+				canvas.height = window.innerHeight / quality;
 
 
 				parameters.screenWidth = canvas.width;
@@ -835,39 +853,9 @@ void main( void ) {
 
 			//
 
-			let goodframes = 0;
-			let prevtime = performance.now();
-
-			function animate( time ) {
+			function animate() {
 
 				requestAnimationFrame( animate );
-
-				// Dynamically adjust quality
-
-				const delta = time - prevtime;
-
-				if ( delta > 17 ) {
-
-					goodframes = 0;
-					quality += 0.1;
-					onWindowResize();
-
-				} else if ( quality > 1 ) {
-
-					goodframes ++;
-
-					if ( goodframes > 500 ) {
-
-						goodframes = 0;
-						quality -= 0.1;
-						onWindowResize();
-
-					}
-
-				}
-
-				prevtime = time;
-
 				render();
 
 			}
