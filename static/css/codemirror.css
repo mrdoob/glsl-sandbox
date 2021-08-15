@@ -2,8 +2,12 @@
   color: white;
   text-shadow: rgba( 0, 0, 0, 1 ) 0px 1px 2px;
   background-color: transparent;
-  position: absolute; left: 25px; top: 75px;
-  padding: 12px;
+  padding: 16px 8px;
+  position: absolute;
+  top: 75px;
+  bottom: 25px;
+  left: 25px;
+  right: 25px;
   border: 0px;
   border-radius: 5px;
   line-height: 1.1em;
@@ -101,16 +105,4 @@ span.CodeMirror-selected {
 }
 .CodeMirror:hover pre.errorLine {
   background: rgba(200, 50, 0, 0.2);
-}
-
-.CodeMirror .resizer {
-	display: block;
-	position: absolute;
-	bottom: 3px;
-	right: 3px;
-	width: 11px;
-	height: 11px;
-	background-image: url('resizer.png');
-	background-repeat: no-repeat;
-	cursor: se-resize;
 }
