@@ -200,10 +200,10 @@ void main( void ) {
 				fullscreenButton.title = 'Press F11 to enter or leave fullscreen mode';
 				fullscreenButton.addEventListener( 'click', function ( event ) {
 
-					if (document.body.requestFullscreen) {
-						document.body.requestFullscreen( { navigationUI: 'hide' } );
-					} else if (document.body.webkitRequestFullScreen) {
-						document.body.webkitRequestFullScreen( Element.ALLOW_KEYBOARD_INPUT );
+					if (document.documentElement.requestFullscreen) {
+						document.documentElement.requestFullscreen( { navigationUI: 'hide' } );
+					} else if (document.documentElement.webkitRequestFullScreen) {
+						document.documentElement.webkitRequestFullScreen();
 					}
 
 				}, false );
