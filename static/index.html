@@ -274,11 +274,7 @@ void main( void ) {
 
 				} catch( error ) { }
 
-				if ( !gl ) {
-
-					alert("WebGL not supported, but code will be shown.");
-
-				} else {
+				if ( gl ) {
 
 					// enable dFdx, dFdy, fwidth
 					gl.getExtension('OES_standard_derivatives');
@@ -292,6 +288,11 @@ void main( void ) {
 					// Create surface buffer (coordinates at screen corners)
 
 					surface.buffer = gl.createBuffer();
+
+				} else {
+
+					alert( 'WebGL not supported, but code will be shown.' );
+
 				}
 
 				// initialize code editor
@@ -388,6 +389,7 @@ void main( void ) {
 						event.preventDefault();
 
 					}
+
 				}, false );
 
 				function settleDown ( event ) {
