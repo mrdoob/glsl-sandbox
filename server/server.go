@@ -162,6 +162,7 @@ func (s *Server) setup() error {
 func (s *Server) routes() {
 	s.echo.GET("/", s.indexHandler)
 	s.echo.GET("/e", s.effectHandler)
+	s.echo.GET("/e_", s.effectHandler_)
 	s.echo.POST("/e", s.saveHandler)
 	s.echo.GET("/item/:id", s.itemHandler)
 
@@ -295,6 +296,10 @@ func (s *Server) indexRender(c echo.Context, admin bool) error {
 
 func (s *Server) effectHandler(c echo.Context) error {
 	return c.File("./static/index.html")
+}
+
+func (s *Server) effectHandler_(c echo.Context) error {
+	return c.File("./static/index_.html")
 }
 
 type itemResponse struct {
