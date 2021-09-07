@@ -359,8 +359,9 @@ void main( void ) {
 					canvas.addEventListener( 'mousedown', surfaceMouseDown, false );
 					panButton.addEventListener( 'mousedown', surfaceMouseDown, false );
 
-					canvas.addEventListener( 'contextmenu', noContextMenu, false);
-					panButton.addEventListener( 'contextmenu', noContextMenu, false);
+					canvas.addEventListener( 'contextmenu', noContextMenu, false );
+					panButton.addEventListener( 'contextmenu', noContextMenu, false );
+
 				}
 
 				var clientXLast, clientYLast;
@@ -603,9 +604,9 @@ void main( void ) {
 				compileButton.style.color = '#00ff00';
 				compileButton.textContent = 'compiled';
 
-				set_save_button('visible');
+				set_save_button( 'visible' );
 
-				panButton.style.display = (fragment.indexOf('varying vec2 surfacePosition;') >= 0) ? 'inline' : 'none';
+				panButton.style.display = fragment.indexOf( 'varying vec2 surfacePosition;' ) >= 0 ? 'inline' : 'none';
 
 				// Cache uniforms
 
@@ -621,10 +622,10 @@ void main( void ) {
 
 				// Set up buffers
 
-				surface.positionAttribute = gl.getAttribLocation(currentProgram, "surfacePosAttrib");
-				gl.enableVertexAttribArray(surface.positionAttribute);
+				surface.positionAttribute = gl.getAttribLocation( currentProgram, "surfacePosAttrib" );
+				gl.enableVertexAttribArray( surface.positionAttribute );
 
-				vertexPosition = gl.getAttribLocation(currentProgram, "position");
+				vertexPosition = gl.getAttribLocation( currentProgram, "position" );
 				gl.enableVertexAttribArray( vertexPosition );
 
 			}
@@ -665,7 +666,7 @@ void main( void ) {
 				cacheUniformLocation( program, 'resolution' );
 				cacheUniformLocation( program, 'texture' );
 
-				screenVertexPosition = gl.getAttribLocation(screenProgram, "position");
+				screenVertexPosition = gl.getAttribLocation( screenProgram, "position" );
 				gl.enableVertexAttribArray( screenVertexPosition );
 
 			}
@@ -911,6 +912,7 @@ void main( void ) {
 				const minutes = Math.floor( ms / 60000 );
 				const seconds = ( ( ms % 60000 ) / 1000 ).toFixed( 2 ).padStart( 5, '0' );
 				return `${ minutes }:${ seconds }`;
+
 			}
 
 		</script>
