@@ -181,6 +181,7 @@ void main( void ) {
 				toolbar.style.position = 'absolute';
 				toolbar.style.top = '0px';
 				toolbar.style.padding = '25px';
+				toolbar.style.paddingTop = 'max(25px, env(safe-area-inset-top))'; // handle hole-punch camera & notch
 				toolbar.style.width = '100%';
 				document.body.appendChild( toolbar );
 
