@@ -13,6 +13,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/kelseyhightower/envconfig"
 	"github.com/mrdoob/glsl-sandbox/server/store"
+	"github.com/uptrace/bun/driver/sqliteshim"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -56,7 +57,7 @@ func start() error {
 		return fmt.Errorf("could not read environment config: %w", err)
 	}
 
-	db, err := sqlx.Open("sqlite", dbURL(cfg.DataPath))
+	db, err := sqlx.Open(sqliteshim.ShimName, dbURL(cfg.DataPath))
 	if err != nil {
 		return fmt.Errorf("could not open database: %w", err)
 	}

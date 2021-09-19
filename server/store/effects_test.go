@@ -8,6 +8,7 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/require"
+	"github.com/uptrace/bun/driver/sqliteshim"
 )
 
 type helper struct {
@@ -26,7 +27,7 @@ var tests = []helper{
 func TestEffects(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			db, err := sqlx.Open("sqlite", testDatabase)
+			db, err := sqlx.Open(sqliteshim.ShimName, testDatabase)
 			require.NoError(t, err)
 
 			s, err := NewEffects(db)

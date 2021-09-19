@@ -7,6 +7,7 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/require"
+	"github.com/uptrace/bun/driver/sqliteshim"
 )
 
 var (
@@ -23,7 +24,7 @@ var (
 )
 
 func TestUserAdd(t *testing.T) {
-	db, err := sqlx.Connect("sqlite", testDatabase)
+	db, err := sqlx.Connect(sqliteshim.ShimName, testDatabase)
 	require.NoError(t, err)
 
 	users, err := NewUsers(db)
@@ -45,7 +46,7 @@ func TestUserAdd(t *testing.T) {
 }
 
 func TestUserUpdate(t *testing.T) {
-	db, err := sqlx.Connect("sqlite", testDatabase)
+	db, err := sqlx.Connect(sqliteshim.ShimName, testDatabase)
 	require.NoError(t, err)
 
 	users, err := NewUsers(db)
@@ -81,7 +82,7 @@ func TestUserUpdate(t *testing.T) {
 }
 
 func TestUserUpdateFunc(t *testing.T) {
-	db, err := sqlx.Connect("sqlite", testDatabase)
+	db, err := sqlx.Connect(sqliteshim.ShimName, testDatabase)
 	require.NoError(t, err)
 
 	users, err := NewUsers(db)
@@ -120,7 +121,7 @@ func TestUserUpdateFunc(t *testing.T) {
 }
 
 func TestUserGetAll(t *testing.T) {
-	db, err := sqlx.Connect("sqlite", testDatabase)
+	db, err := sqlx.Connect(sqliteshim.ShimName, testDatabase)
 	require.NoError(t, err)
 
 	users, err := NewUsers(db)
