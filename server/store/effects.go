@@ -6,8 +6,6 @@ import (
 	"time"
 
 	"github.com/jmoiron/sqlx"
-
-	_ "modernc.org/sqlite"
 )
 
 type Effect struct {

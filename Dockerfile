@@ -7,7 +7,7 @@ RUN apt-get update && \
 WORKDIR /build
 COPY . .
 
-RUN go build -v ./server/cmd/glslsandbox
+RUN go build -tags cgosqlite -v ./server/cmd/glslsandbox
 
 FROM debian:buster-slim
 
