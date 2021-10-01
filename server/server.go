@@ -287,11 +287,7 @@ func (s *Server) indexRender(c echo.Context, admin bool) error {
 		Admin:        admin,
 	}
 
-	err = c.Render(http.StatusOK, "gallery", d)
-	if err != nil {
-		panic(err)
-	}
-	return err
+	return c.Render(http.StatusOK, "gallery", d)
 }
 
 func (s *Server) effectHandler(c echo.Context) error {
