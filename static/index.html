@@ -411,6 +411,7 @@ void main( void ) {
 				}, false );
 
 				function settleDown ( event ) {
+					surface.isPanning = surface.isZooming = false;
 					document.body.style.cursor = 'default';
 					panButton.style.cursor = 'move';
 				}
