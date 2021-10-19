@@ -65,9 +65,6 @@
         }
         .gl-label {
             margin: 0.5rem 0;
-            display: flex;
-            flex-direction: row;
-            justify-content: space-between;
             font-weight: 800;
             color: var(--gl-color-gray-100);
         }
@@ -99,11 +96,6 @@
             background-color: var(--gl-color-black-100);
             color: var(--gl-color-white-100);
         }
-        .gl-forgot-password {
-            font-size: 12px;
-            color: var(--gl-color-blue-100);
-            text-decoration: none;
-        }
     </style>
 </head>
 <body>
@@ -114,7 +106,7 @@
             <form class="gl-form" action="/login" method="POST">
                 <label class="gl-label" for="name">Username</label>
                 <input class="gl-input" type="text" id="name" name="name" placeholder="Enter your username"/><br/>
-                <label class="gl-label" for="password">Password <a class="gl-forgot-password" href="#">forgot password?</a></label>
+                <label class="gl-label" for="password">Password</label>
                 <input class="gl-input" type="password" id="password" name="password" placeholder="Enter your password"/><br/>
                 <input class="gl-input gl-input--btn" type="submit" value="Submit"/>
             </form>
