@@ -9,7 +9,7 @@
 			* {
 				box-sizing: border-box;
 			}
-			
+
 			html {
 				height: 100%;
 			}
@@ -235,8 +235,19 @@ void main( void ) {
 
 				var button = document.createElement( 'a' );
 				button.style.marginRight = '0px';
-				button.textContent = 'gallery';
-				button.href = '/';
+
+				if ( document.referrer.startsWith( 'https://glslsandbox.com/' ) ) {
+
+					button.textContent = 'back';
+					button.href = document.referrer;
+
+				} else {
+
+					button.textContent = 'gallery';
+					button.href = '/';
+
+				}
+
 				rightside.appendChild( button );
 
 				showButton = document.createElement( 'button' );
