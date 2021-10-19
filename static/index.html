@@ -235,15 +235,14 @@ void main( void ) {
 
 				var button = document.createElement( 'a' );
 				button.style.marginRight = '0px';
+				button.textContent = 'gallery';
 
 				if ( document.referrer.startsWith( 'https://glslsandbox.com/' ) ) {
 
-					button.textContent = 'back';
-					button.href = document.referrer;
+					button.href = 'javascript:window.history.go( -1 )';
 
 				} else {
 
-					button.textContent = 'gallery';
 					button.href = '/';
 
 				}
