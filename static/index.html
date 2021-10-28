@@ -93,7 +93,7 @@
 
 		<script id="example" type="x-shader/x-fragment">#extension GL_OES_standard_derivatives : enable
 
-precision mediump float;
+precision highp float;
 
 uniform float time;
 uniform vec2 mouse;
@@ -115,7 +115,7 @@ void main( void ) {
 
 		<script id="fragmentShader" type="x-shader/x-fragment">
 
-			precision mediump float;
+			precision highp float;
 
 			uniform vec2 resolution;
 			uniform sampler2D texture;
