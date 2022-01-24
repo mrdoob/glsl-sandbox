@@ -303,7 +303,7 @@ void main( void ) {
 
 				try {
 
-					gl = canvas.getContext( 'webgl', { preserveDrawingBuffer: true } );
+					gl = canvas.getContext( 'webgl', { antialias: false, depth: false, stencil: false, premultipliedAlpha: false, preserveDrawingBuffer: true } );
 
 				} catch( error ) { }
 
