@@ -9,7 +9,7 @@ COPY . .
 
 RUN go build -tags cgosqlite -v ./server/cmd/glslsandbox
 
-FROM debian:buster-slim
+FROM debian:bookworm-slim
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends ca-certificates && \
