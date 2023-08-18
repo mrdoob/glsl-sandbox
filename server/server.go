@@ -164,7 +164,12 @@ func (s *Server) routes() {
 	s.echo.GET("/e", s.effectHandler)
 	s.echo.GET("/e_", s.effectHandler_)
 	s.echo.POST("/e", s.saveHandler)
-	s.echo.GET("/item/:id", s.itemHandler)
+
+	cors := middleware.CORSWithConfig(middleware.CORSConfig{
+		Skipper:      middleware.DefaultSkipper,
+		AllowOrigins: []string{"*"},
+	})
+	s.echo.GET("/item/:id", s.itemHandler, cors)
 
 	s.echo.Static("/thumbs", filepath.Join(s.dataPath, pathThumbs))
 	s.echo.Static("/css", "./server/assets/css")
