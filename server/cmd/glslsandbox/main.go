@@ -2,12 +2,11 @@ package main
 
 import (
 	"crypto/md5"
+	"crypto/rand"
 	"encoding/hex"
 	"fmt"
-	"math/rand"
 	"os"
 	"path/filepath"
-	"time"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/kelseyhightower/envconfig"
@@ -119,8 +118,10 @@ func createUser(auth *server.Auth, users *store.Users) error {
 	}
 
 	b := make([]byte, 16)
-	rand.Seed(time.Now().UnixNano())
-	rand.Read(b)
+	_, err = rand.Read(b)
+	if err != nil {
+		return fmt.Errorf("could not generate password: %w", err)
+	}
 	m := md5.Sum(b)
 	password := hex.EncodeToString(m[:])
 	err = auth.Add("admin", password, "", store.RoleAdmin)
