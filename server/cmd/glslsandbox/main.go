@@ -25,6 +25,7 @@ type Config struct {
 	TLSAddr    string `envconfig:"TLS_ADDR"`
 	Domains    string `envconfig:"DOMAINS" default:"www.glslsandbox.com,glslsandbox.com"`
 	Dev        bool   `envconfig:"DEV" default:"true"`
+	ReadOnly   bool   `envconfig:"READ_ONLY" default:"false"`
 }
 
 func main() {
@@ -82,6 +83,7 @@ func start() error {
 		auth,
 		cfg.DataPath,
 		cfg.Dev,
+		cfg.ReadOnly,
 	)
 	if err != nil {
 		return fmt.Errorf("could not create server: %w", err)

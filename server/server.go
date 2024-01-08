@@ -27,9 +27,7 @@ const (
 	perPage     = 50
 )
 
-var (
-	ErrInvalidData = fmt.Errorf("invalid data")
-)
+var ErrInvalidData = fmt.Errorf("invalid data")
 
 type Template struct {
 	templates *template.Template
@@ -80,6 +78,7 @@ type Server struct {
 	effects  *store.Effects
 	auth     *Auth
 	dataPath string
+	readOnly bool
 }
 
 func New(
@@ -90,6 +89,7 @@ func New(
 	auth *Auth,
 	dataPath string,
 	dev bool,
+	readOnly bool,
 ) (*Server, error) {
 	var tpl *template.Template
 	if !dev {
@@ -115,6 +115,7 @@ func New(
 		effects:  e,
 		auth:     auth,
 		dataPath: dataPath,
+		readOnly: readOnly,
 	}, nil
 }
 
@@ -163,7 +164,10 @@ func (s *Server) routes() {
 	s.echo.GET("/", s.indexHandler)
 	s.echo.GET("/e", s.effectHandler)
 	s.echo.GET("/e_", s.effectHandler_)
-	s.echo.POST("/e", s.saveHandler)
+
+	if !s.readOnly {
+		s.echo.POST("/e", s.saveHandler)
+	}
 
 	cors := middleware.CORSWithConfig(middleware.CORSConfig{
 		Skipper:      middleware.DefaultSkipper,
@@ -228,6 +232,8 @@ type galleryData struct {
 	NextPage string
 	// Admin is true when accessing "/admin" path.
 	Admin bool
+	// ReadOnly tells the server is in read only mode.
+	ReadOnly bool
 }
 
 func (s *Server) indexRender(c echo.Context, admin bool) error {
@@ -290,6 +296,7 @@ func (s *Server) indexRender(c echo.Context, admin bool) error {
 		IsPrevious:   page > 0,
 		PreviousPage: previousPage,
 		Admin:        admin,
+		ReadOnly:     s.readOnly,
 	}
 
 	return c.Render(http.StatusOK, "gallery", d)

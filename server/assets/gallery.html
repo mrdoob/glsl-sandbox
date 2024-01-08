@@ -123,7 +123,13 @@ gallery by <a href="https://twitter.com/thevaw">@thevaw</a>, <a href="https://tw
 <a href="https://twitter.com/mrdoob">@mrdoob</a><br/>
 editor by <a href="https://twitter.com/mrdoob">@mrdoob</a>, <a href="https://twitter.com/mrkishi">@mrkishi</a>, <a href="https://twitter.com/p01">@p01</a>, <a href="https://twitter.com/alteredq">@alteredq</a>, <a href="https://twitter.com/kusmabite">@kusmabite</a> and <a href="https://twitter.com/emackey">@emackey</a>
 <br/><br/>
+
+{{ if .ReadOnly }}
+<h2 style="color:#ff6961">The server is in maintenance mode. You can not create or modify effects.</h2>
+{{ else }}
 <a href="/e"><button>new shader</button></a>
+{{ end }}
+
 <div id="gallery">
 
 {{ if .Admin }}
