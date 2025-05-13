@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/golang-jwt/jwt"
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/mrdoob/glsl-sandbox/server/store"
@@ -18,12 +18,10 @@ const (
 	bcryptCost            = 8
 )
 
-var (
-	ErrNotAuthorized = fmt.Errorf("user not authorized")
-)
+var ErrNotAuthorized = fmt.Errorf("user not authorized")
 
 type Claims struct {
-	jwt.StandardClaims
+	jwt.RegisteredClaims
 
 	Name string     `json:"name"`
 	Role store.Role `json:"role"`
@@ -49,12 +47,12 @@ func (a *Auth) GenerateToken(c echo.Context, u store.User) error {
 		return fmt.Errorf("invalid role")
 	}
 
-	expirationTime := time.Now().Add(tokenDuration)
+	expirationTime := jwt.NewNumericDate(time.Now().Add(tokenDuration))
 	claims := Claims{
 		Name: u.Name,
 		Role: u.Role,
-		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: expirationTime.Unix(),
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: expirationTime,
 		},
 	}
 
@@ -68,7 +66,7 @@ func (a *Auth) GenerateToken(c echo.Context, u store.User) error {
 	cookie := http.Cookie{
 		Name:     accessTokenCookieName,
 		Value:    tokenString,
-		Expires:  expirationTime,
+		Expires:  expirationTime.Time,
 		Path:     "/",
 		HttpOnly: true,
 	}
