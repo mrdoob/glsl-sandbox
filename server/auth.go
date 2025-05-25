@@ -1,15 +1,16 @@
 package server
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
-	"time"
-
 	"slices"
+	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 	echojwt "github.com/labstack/echo-jwt/v4"
 	"github.com/labstack/echo/v4"
+	"github.com/markbates/goth"
 	"github.com/mrdoob/glsl-sandbox/server/store"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -25,8 +26,9 @@ var ErrNotAuthorized = fmt.Errorf("user not authorized")
 type Claims struct {
 	jwt.RegisteredClaims
 
-	Name string     `json:"name"`
-	Role store.Role `json:"role"`
+	ID         int    `json:"id"`
+	Provider   string `json:"provider"`
+	ProviderID string `json:"provider_id"`
 }
 
 type Auth struct {
@@ -51,8 +53,9 @@ func (a *Auth) GenerateToken(c echo.Context, u store.User) error {
 
 	expirationTime := jwt.NewNumericDate(time.Now().Add(tokenDuration))
 	claims := Claims{
-		Name: u.Name,
-		Role: u.Role,
+		ID:         u.ID,
+		Provider:   u.Provider,
+		ProviderID: u.ProviderID,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: expirationTime,
 		},
@@ -77,16 +80,16 @@ func (a *Auth) GenerateToken(c echo.Context, u store.User) error {
 	return nil
 }
 
-func (a *Auth) Add(
+func (a *Auth) AddPassword(
 	name string,
 	password string,
 	email string,
 	role store.Role,
-) error {
+) (int, error) {
 	hashedPassword, err := bcrypt.GenerateFromPassword(
 		[]byte(password), bcryptCost)
 	if err != nil {
-		return fmt.Errorf("could not hash password: %w", err)
+		return -1, fmt.Errorf("could not hash password: %w", err)
 	}
 	u := store.User{
 		Name:      name,
@@ -94,20 +97,73 @@ func (a *Auth) Add(
 		Email:     email,
 		Role:      role,
 		Active:    true,
-		CreatedAt: time.Now(),
+		CreatedAt: time.Now().UTC(),
+		Provider:  "password",
 	}
+
 	return a.users.Add(u)
 }
 
-func (a *Auth) Login(c echo.Context, name, password string) error {
-	u, err := a.users.User(name)
+func (a *Auth) Add(
+	name string,
+	email string,
+	role store.Role,
+	provider string,
+	providerID string,
+) (int, error) {
+	u := store.User{
+		Name:       name,
+		Email:      email,
+		Role:       role,
+		Active:     true,
+		CreatedAt:  time.Now().UTC(),
+		Provider:   provider,
+		ProviderID: providerID,
+	}
+
+	return a.users.Add(u)
+}
+
+func (a *Auth) LoginPassword(c echo.Context, name, password string) error {
+	u, err := a.users.Name(name)
 	if err != nil {
 		return err
+	}
+
+	if !u.Active {
+		return fmt.Errorf("user not active: %s", name)
 	}
 
 	err = bcrypt.CompareHashAndPassword(u.Password, []byte(password))
 	if err != nil {
 		return fmt.Errorf("invalid password: %w", err)
+	}
+
+	err = a.GenerateToken(c, u)
+	if err != nil {
+		return fmt.Errorf("could not generate cookie: %w", err)
+	}
+
+	return nil
+}
+
+func (a *Auth) LoginGoth(c echo.Context, gUser goth.User) error {
+	u, err := a.users.ProviderID(gUser.Provider, gUser.UserID)
+	if err != nil && errors.Is(err, store.ErrNotFound) {
+		_, err := a.Add(
+			gUser.NickName,
+			gUser.Email,
+			store.RoleUser,
+			gUser.Provider,
+			gUser.UserID,
+		)
+		if err != nil {
+			return err
+		}
+	}
+
+	if !u.Active {
+		return fmt.Errorf("user not active: %s-%s", u.Provider, u.ProviderID)
 	}
 
 	err = a.GenerateToken(c, u)
@@ -138,11 +194,20 @@ func (a *Auth) CheckPermissions(c echo.Context, roles ...store.Role) error {
 		return fmt.Errorf("invalid claims")
 	}
 
-	if slices.Contains(roles, claims.Role) {
+	dbUser, err := a.users.User(claims.ID)
+	if err != nil {
+		return err
+	}
+
+	if !dbUser.Active {
+		return errors.New("user not active")
+	}
+
+	if slices.Contains(roles, dbUser.Role) {
 		return nil
 	}
 
-	return fmt.Errorf("not enough permissions: %s", claims.Role)
+	return fmt.Errorf("not enough permissions: %s", dbUser.Role)
 }
 
 func (a *Auth) Middleware(

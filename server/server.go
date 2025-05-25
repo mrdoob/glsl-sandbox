@@ -556,6 +556,7 @@ type loginData struct {
 	Password string `form:"password"`
 }
 
+// TODO(jfontan): disable user password login?
 func (s *Server) loginHandler(c echo.Context) error {
 	log := c.Logger()
 
@@ -566,7 +567,7 @@ func (s *Server) loginHandler(c echo.Context) error {
 		return c.Redirect(http.StatusSeeOther, "/login")
 	}
 
-	err = s.auth.Login(c, l.Name, l.Password)
+	err = s.auth.LoginPassword(c, l.Name, l.Password)
 	if err != nil {
 		log.Errorf("could not authenticate: %s", err.Error())
 		return c.Redirect(http.StatusSeeOther, "/login")

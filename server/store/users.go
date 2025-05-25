@@ -18,13 +18,15 @@ const (
 )
 
 type User struct {
-	ID        int       `db:"id"`
-	Name      string    `db:"name"`
-	Password  []byte    `db:"password"`
-	Email     string    `db:"email"`
-	Role      Role      `db:"role"`
-	Active    bool      `db:"active"`
-	CreatedAt time.Time `db:"created_at"`
+	ID         int       `db:"id"`
+	Name       string    `db:"name"`
+	Password   []byte    `db:"password"`
+	Email      string    `db:"email"`
+	Role       Role      `db:"role"`
+	Active     bool      `db:"active"`
+	CreatedAt  time.Time `db:"created_at"`
+	Provider   string    `db:"provider"`
+	ProviderID string    `db:"provider_id"`
 }
 
 const (
@@ -36,12 +38,18 @@ CREATE TABLE IF NOT EXISTS users (
 	email TEXT,
 	role TEXT,
 	active INTEGER,
-	created_at TIMESTAMP
+	created_at TIMESTAMP,
+	provider TEXT,
+	provider_id TEXT
 )
 `
 
 	sqlIndexUsersName = `
 CREATE INDEX IF NOT EXISTS idx_users_name ON users (name)
+`
+
+	sqlIndexUsersProviderID = `
+CREATE INDEX IF NOT EXISTS idx_users_provider_id ON users (provider, provider_id)
 `
 )
 
@@ -70,6 +78,12 @@ func (s *Users) Init() error {
 	if err != nil {
 		return fmt.Errorf("could not create users(name): %w", err)
 	}
+
+	_, err = s.db.Exec(sqlIndexUsersProviderID)
+	if err != nil {
+		return fmt.Errorf("could not create users(provider, provider_id): %w", err)
+	}
+
 	return nil
 }
 
@@ -80,7 +94,17 @@ SELECT * FROM users
 
 	sqlSelectUser = `
 SELECT * FROM users
+	WHERE id = ?
+`
+
+	sqlSelectUserName = `
+SELECT * FROM users
 	WHERE name = ?
+`
+
+	sqlSelectUserProviderID = `
+SELECT * FROM users
+	WHERE provider = ? AND provider_id = ?
 `
 
 	sqlInsertUser = `
@@ -90,32 +114,39 @@ INSERT INTO users (
 	email,
 	role,
 	active,
-	created_at
+	created_at,
+	provider,
+	provider_id
 ) VALUES(
 	:name,
 	:password,
 	:email,
 	:role,
 	:active,
-	:created_at
-)
+	:created_at,
+	:provider,
+	:provider_id
+) RETURNING id
 `
 
 	sqlUpdateUser = `
 UPDATE users
 	SET
+	  name = :name,
 		password = :password,
 		email = :email,
 		role = :role,
 		active = :active,
-		created_at = :created_at
-	WHERE name = :name
+		created_at = :created_at,
+		provider = :provider,
+		provider_id = :provider_id
+	WHERE id = :id
 `
 )
 
-func (s *Users) User(name string) (User, error) {
+func (s *Users) User(id int) (User, error) {
 	var u User
-	r := s.db.QueryRowx(sqlSelectUser, name)
+	r := s.db.QueryRowx(sqlSelectUser, id)
 	err := r.StructScan(&u)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -127,15 +158,45 @@ func (s *Users) User(name string) (User, error) {
 	return u, nil
 }
 
-func (s *Users) Add(user User) error {
+func (s *Users) Name(name string) (User, error) {
+	var u User
+	r := s.db.QueryRowx(sqlSelectUserName, name)
+	err := r.StructScan(&u)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return User{}, ErrNotFound
+		}
+		return User{}, fmt.Errorf("could not get user: %w", err)
+	}
+
+	return u, nil
+}
+
+func (s *Users) ProviderID(provider, providerID string) (User, error) {
+	var u User
+	r := s.db.QueryRowx(sqlSelectUserProviderID, provider, providerID)
+	err := r.StructScan(&u)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return User{}, ErrNotFound
+		}
+		return User{}, fmt.Errorf("could not get user: %w", err)
+	}
+
+	return u, nil
+}
+
+func (s *Users) Add(user User) (int, error) {
 	if user.CreatedAt.IsZero() {
 		user.CreatedAt = time.Now()
 	}
-	_, err := s.db.NamedExec(sqlInsertUser, user)
+	res, err := s.db.NamedExec(sqlInsertUser, user)
 	if err != nil {
-		return fmt.Errorf("could not add user: %w", err)
+		return -1, fmt.Errorf("could not add user: %w", err)
 	}
-	return nil
+
+	id, err := res.LastInsertId()
+	return int(id), err
 }
 
 func (s *Users) Update(user User) error {
@@ -153,10 +214,10 @@ func (s *Users) Update(user User) error {
 	return nil
 }
 
-func (s *Users) UpdateFunc(name string, f func(User) User) error {
+func (s *Users) UpdateFunc(id int, f func(User) User) error {
 	return s.transaction(func(tx *sqlx.Tx) error {
 		var u User
-		r := tx.QueryRowx(sqlSelectUser, name)
+		r := tx.QueryRowx(sqlSelectUser, id)
 		err := r.StructScan(&u)
 		if err != nil {
 			if errors.Is(err, sql.ErrNoRows) {

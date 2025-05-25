@@ -1,9 +1,6 @@
 package main
 
 import (
-	"crypto/md5"
-	"crypto/rand"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"os"
@@ -65,10 +62,10 @@ func start() error {
 
 	auth := server.NewAuth(users, cfg.AuthSecret)
 
-	err = createUser(auth, users)
-	if err != nil {
-		return err
-	}
+	// err = createUser(auth, users)
+	// if err != nil {
+	// 	return err
+	// }
 
 	if cfg.Import != "" {
 		err = importDatabase(effects, cfg.Import)
@@ -124,24 +121,25 @@ func importDatabase(effects *store.Effects, file string) error {
 	return nil
 }
 
-func createUser(auth *server.Auth, users *store.Users) error {
-	_, err := users.User("admin")
-	if err == nil {
-		return nil
-	}
+// TODO(jfontan): is admin user needed at start?
+// func createUser(auth *server.Auth, users *store.Users) error {
+// 	_, err := users.User("admin")
+// 	if err == nil {
+// 		return nil
+// 	}
 
-	b := make([]byte, 16)
-	_, err = rand.Read(b)
-	if err != nil {
-		return fmt.Errorf("could not generate password: %w", err)
-	}
-	m := md5.Sum(b)
-	password := hex.EncodeToString(m[:])
-	err = auth.Add("admin", password, "", store.RoleAdmin)
-	if err != nil {
-		return fmt.Errorf("could not create admin user: %w", err)
-	}
+// 	b := make([]byte, 16)
+// 	_, err = rand.Read(b)
+// 	if err != nil {
+// 		return fmt.Errorf("could not generate password: %w", err)
+// 	}
+// 	m := md5.Sum(b)
+// 	password := hex.EncodeToString(m[:])
+// 	err = auth.Add("admin", password, "", store.RoleAdmin)
+// 	if err != nil {
+// 		return fmt.Errorf("could not create admin user: %w", err)
+// 	}
 
-	fmt.Printf("created user 'admin' with password '%s'", password)
-	return nil
-}
+// 	fmt.Printf("created user 'admin' with password '%s'", password)
+// 	return nil
+// }
