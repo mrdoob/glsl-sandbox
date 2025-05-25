@@ -1,7 +1,6 @@
 package thumb
 
 import (
-	"io/ioutil"
 	"os"
 	"path"
 	"testing"
@@ -10,7 +9,7 @@ import (
 )
 
 func TestThumbs(t *testing.T) {
-	d, err := ioutil.TempDir("", "glsl")
+	d, err := os.MkdirTemp("", "glsl")
 	require.NoError(t, err)
 	defer os.RemoveAll(d)
 
@@ -24,7 +23,7 @@ func TestThumbs(t *testing.T) {
 	err = thumbs.Save("1.png", []byte("data"))
 	require.NoError(t, err)
 
-	data, err := ioutil.ReadFile(path.Join(d, "1.png"))
+	data, err := os.ReadFile(path.Join(d, "1.png"))
 	require.NoError(t, err)
 
 	require.Equal(t, []byte("data"), data)

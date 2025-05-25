@@ -68,7 +68,7 @@ func prepareTemplate() (*template.Template, error) {
 }
 
 func (t *Template) Render(
-	w io.Writer, name string, data interface{}, c echo.Context,
+	w io.Writer, name string, data any, c echo.Context,
 ) error {
 	tpl := t.templates
 	if tpl == nil {
@@ -465,7 +465,7 @@ func (s *Server) saveHandler(c echo.Context) error {
 	} else {
 		parts := strings.Split(save.CodeID, ".")
 		if len(parts) < 1 {
-			c.Logger().Errorf("malformed code id: %s", err.Error())
+			c.Logger().Errorf("malformed code id: %s", save.CodeID)
 			return c.String(http.StatusBadRequest, "")
 		}
 
