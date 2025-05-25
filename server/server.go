@@ -235,7 +235,7 @@ func (s *Server) routes() {
 	s.echo.POST("/login", s.loginHandler)
 
 	admin := s.echo.Group("/admin")
-	admin.Use(s.auth.Middleware(func(err error, c echo.Context) error {
+	admin.Use(s.auth.Middleware(func(c echo.Context, err error) error {
 		c.Logger().Errorf("not authorized: %s", err.Error())
 		return c.Redirect(http.StatusSeeOther, "/login")
 	}))
@@ -247,9 +247,9 @@ func (s *Server) routes() {
 }
 
 func (s *Server) indexHandler(c echo.Context) error {
-	ses, err := s.sessionStore.Get(c.Request(), sessionName)
+	sess, err := s.sessionStore.Get(c.Request(), sessionName)
 	if err == nil {
-		spew.Dump(ses.Values)
+		spew.Dump(sess.Values)
 	} else {
 		s.echo.Logger.Error(err)
 	}
@@ -263,7 +263,7 @@ func (s *Server) adminHandler(c echo.Context) error {
 
 // galleryEffect has information about each effect displayed in the gallery.
 type galleryEffect struct {
-	// ID is the effect identifyier.
+	// ID is the effect identifier.
 	ID int
 	// Version is the latest effect version.
 	Version int
@@ -544,7 +544,7 @@ func (s *Server) adminPostHandler(c echo.Context) error {
 
 		err = s.effects.Hide(id, false)
 		if err != nil {
-			c.Logger().Errorf("could not unhide effect: %s", err.Error())
+			c.Logger().Errorf("could not reveal effect: %s", err.Error())
 		}
 	}
 
@@ -604,10 +604,10 @@ func (s *Server) authRoutes() {
 			return err
 		}
 
-		ses, err := s.sessionStore.Get(c.Request(), sessionName)
+		sess, err := s.sessionStore.Get(c.Request(), sessionName)
 		if err == nil {
-			ses.Options.MaxAge = -1
-			err = ses.Save(c.Request(), c.Response())
+			sess.Options.MaxAge = -1
+			err = sess.Save(c.Request(), c.Response())
 			if err != nil {
 				e.Logger.Errorf("could not delete session: %s", err.Error())
 			}
@@ -634,16 +634,16 @@ func (s *Server) authRoutes() {
 }
 
 func (s *Server) saveUser(c echo.Context, user goth.User) error {
-	ses, err := s.sessionStore.New(c.Request(), sessionName)
+	sess, err := s.sessionStore.New(c.Request(), sessionName)
 	if err != nil {
 		return err
 	}
 
-	ses.Values["user"] = user
-	ses.Values["provider"] = c.Param("provider")
-	ses.Values["id"] = user.UserID
+	sess.Values["user"] = user
+	sess.Values["provider"] = c.Param("provider")
+	sess.Values["id"] = user.UserID
 
-	err = ses.Save(c.Request(), c.Response())
+	err = sess.Save(c.Request(), c.Response())
 	if err != nil {
 		return err
 	}

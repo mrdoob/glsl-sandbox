@@ -5,7 +5,10 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/golang-jwt/jwt/v4"
+	"slices"
+
+	"github.com/golang-jwt/jwt/v5"
+	echojwt "github.com/labstack/echo-jwt/v4"
 	"github.com/labstack/echo/v4"
 	"github.com/mrdoob/glsl-sandbox/server/store"
 	"golang.org/x/crypto/bcrypt"
@@ -115,7 +118,7 @@ func (a *Auth) Login(c echo.Context, name, password string) error {
 	return nil
 }
 
-func (a *Auth) CheckPermissions(c echo.Context) error {
+func (a *Auth) CheckPermissions(c echo.Context, roles ...store.Role) error {
 	user := c.Get("user")
 	if user == nil {
 		return fmt.Errorf("token not set")
@@ -126,9 +129,8 @@ func (a *Auth) CheckPermissions(c echo.Context) error {
 		return fmt.Errorf("malformed token")
 	}
 
-	err := u.Claims.Valid()
-	if err != nil {
-		return fmt.Errorf("invalid claims: %w", err)
+	if !u.Valid {
+		return fmt.Errorf("invalid claims")
 	}
 
 	claims, ok := u.Claims.(*Claims)
@@ -136,21 +138,22 @@ func (a *Auth) CheckPermissions(c echo.Context) error {
 		return fmt.Errorf("invalid claims")
 	}
 
-	if claims.Role != store.RoleAdmin && claims.Role != store.RoleModerator {
-		return fmt.Errorf("not enough permissions: %s", claims.Role)
+	if slices.Contains(roles, claims.Role) {
+		return nil
 	}
 
-	return nil
+	return fmt.Errorf("not enough permissions: %s", claims.Role)
 }
 
 func (a *Auth) Middleware(
-	f func(error, echo.Context) error,
+	f func(echo.Context, error) error,
 ) echo.MiddlewareFunc {
-	return nil
-	// return middleware.JWTWithConfig(middleware.JWTConfig{
-	// 	Claims:                  new(Claims),
-	// 	SigningKey:              []byte(a.secret),
-	// 	TokenLookup:             "cookie:" + accessTokenCookieName,
-	// 	ErrorHandlerWithContext: f,
-	// })
+	return echojwt.WithConfig(echojwt.Config{
+		SigningKey:   []byte(a.secret),
+		TokenLookup:  "cookie:" + accessTokenCookieName,
+		ErrorHandler: f,
+		NewClaimsFunc: func(c echo.Context) jwt.Claims {
+			return new(Claims)
+		},
+	})
 }
