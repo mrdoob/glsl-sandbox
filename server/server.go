@@ -3,19 +3,27 @@ package server
 import (
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"html/template"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"path"
 	"path/filepath"
 	"strconv"
 	"strings"
 
+	"github.com/davecgh/go-spew/spew"
+	"github.com/gorilla/sessions"
+	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/labstack/gommon/log"
+	"github.com/markbates/goth"
+	"github.com/markbates/goth/gothic"
+	"github.com/markbates/goth/providers/github"
 	"github.com/mrdoob/glsl-sandbox/server/store"
 	"golang.org/x/crypto/acme/autocert"
 )
@@ -25,6 +33,10 @@ const (
 	pathThumbs  = "thumbs"
 	pathCerts   = "certs"
 	perPage     = 50
+
+	// max session age 30 days
+	sessionMaxAge = 86400 * 30
+	sessionName   = "glslsandbox"
 )
 
 var ErrInvalidData = fmt.Errorf("invalid data")
@@ -79,6 +91,9 @@ type Server struct {
 	auth     *Auth
 	dataPath string
 	readOnly bool
+
+	sessionStore sessions.Store
+	callbackHost string
 }
 
 func New(
@@ -90,6 +105,7 @@ func New(
 	dataPath string,
 	dev bool,
 	readOnly bool,
+	callbackServer string,
 ) (*Server, error) {
 	var tpl *template.Template
 	if !dev {
@@ -112,10 +128,11 @@ func New(
 		template: &Template{
 			templates: tpl,
 		},
-		effects:  e,
-		auth:     auth,
-		dataPath: dataPath,
-		readOnly: readOnly,
+		effects:      e,
+		auth:         auth,
+		dataPath:     dataPath,
+		readOnly:     readOnly,
+		callbackHost: callbackServer,
 	}, nil
 }
 
@@ -151,11 +168,44 @@ func (s *Server) setup() error {
 		s.echo.Pre(middleware.HTTPSRedirect())
 	}
 
+	err := s.setupAuth()
+	if err != nil {
+		return err
+	}
+
 	s.echo.Use(middleware.Recover())
 	s.echo.Renderer = s.template
 	s.echo.Logger.SetLevel(log.DEBUG)
 	s.echo.Use(middleware.Logger())
 	s.routes()
+
+	return nil
+}
+
+func (s *Server) setupAuth() error {
+	sessionSecret := os.Getenv("SESSION_SECRET")
+	if sessionSecret == "" {
+		return errors.New("SESSION_SECRET must be set")
+	}
+
+	sessionStore := sessions.NewCookieStore([]byte("secret"))
+	sessionStore.MaxAge(sessionMaxAge)
+	gothic.Store = sessionStore
+
+	s.sessionStore = sessionStore
+
+	s.echo.Use(session.Middleware(sessionStore))
+
+	githubClientID := os.Getenv("GITHUB_CLIENT_ID")
+	githubSecret := os.Getenv("GITHUB_SECRET")
+
+	if githubClientID == "" || githubSecret == "" {
+		return errors.New("GITHUB_CLIENT_ID and GITHUB_SECRET must be set")
+	}
+
+	goth.UseProviders(
+		github.New(githubClientID, githubSecret, s.callbackURL("github")),
+	)
 
 	return nil
 }
@@ -192,9 +242,18 @@ func (s *Server) routes() {
 
 	admin.GET("", s.adminHandler)
 	admin.POST("", s.adminPostHandler)
+
+	s.authRoutes()
 }
 
 func (s *Server) indexHandler(c echo.Context) error {
+	ses, err := s.sessionStore.Get(c.Request(), sessionName)
+	if err == nil {
+		spew.Dump(ses.Values)
+	} else {
+		s.echo.Logger.Error(err)
+	}
+
 	return s.indexRender(c, false)
 }
 
@@ -514,6 +573,99 @@ func (s *Server) loginHandler(c echo.Context) error {
 	}
 
 	return c.Redirect(http.StatusSeeOther, "/admin")
+}
+
+func (s *Server) authRoutes() {
+	e := s.echo
+
+	e.GET("/auth/:provider/callback", func(c echo.Context) error {
+		user, err := gothic.CompleteUserAuth(
+			c.Response(),
+			gothic.GetContextWithProvider(c.Request(), c.Param("provider")),
+		)
+		if err != nil {
+			return err
+		}
+
+		err = s.saveUser(c, user)
+		if err != nil {
+			return err
+		}
+
+		return c.Redirect(http.StatusSeeOther, "/")
+	})
+
+	e.GET("/logout/:provider", func(c echo.Context) error {
+		err := gothic.Logout(
+			c.Response(),
+			gothic.GetContextWithProvider(c.Request(), c.Param("provider")),
+		)
+		if err != nil {
+			return err
+		}
+
+		ses, err := s.sessionStore.Get(c.Request(), sessionName)
+		if err == nil {
+			ses.Options.MaxAge = -1
+			err = ses.Save(c.Request(), c.Response())
+			if err != nil {
+				e.Logger.Errorf("could not delete session: %s", err.Error())
+			}
+		}
+
+		return c.Redirect(http.StatusSeeOther, "/")
+	})
+
+	e.GET("/auth/:provider", func(c echo.Context) error {
+		request := gothic.GetContextWithProvider(c.Request(), c.Param("provider"))
+
+		if user, err := gothic.CompleteUserAuth(c.Response(), request); err == nil {
+			err := s.saveUser(c, user)
+			if err != nil {
+				return err
+			}
+
+			return c.Redirect(http.StatusSeeOther, "/")
+		}
+
+		gothic.BeginAuthHandler(c.Response(), request)
+		return nil
+	})
+}
+
+func (s *Server) saveUser(c echo.Context, user goth.User) error {
+	ses, err := s.sessionStore.New(c.Request(), sessionName)
+	if err != nil {
+		return err
+	}
+
+	ses.Values["user"] = user
+	ses.Values["provider"] = c.Param("provider")
+	ses.Values["id"] = user.UserID
+
+	err = ses.Save(c.Request(), c.Response())
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *Server) callbackURL(provider string) string {
+	scheme := "http"
+	if s.tlsAddr != "" {
+		scheme = "https"
+	}
+
+	path := fmt.Sprintf("/auth/%s/callback", provider)
+
+	u := url.URL{
+		Scheme: scheme,
+		Host:   s.callbackHost,
+		Path:   path,
+	}
+
+	return u.String()
 }
 
 func thumbPath(dataPath string, id int) string {

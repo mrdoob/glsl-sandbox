@@ -4,6 +4,7 @@ import (
 	"crypto/md5"
 	"crypto/rand"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -18,14 +19,15 @@ import (
 const dbName = "glslsandbox.db"
 
 type Config struct {
-	DataPath   string `envconfig:"DATA_PATH" default:"./data"`
-	Import     string `envconfig:"IMPORT"`
-	AuthSecret string `envconfig:"AUTH_SECRET" default:"secret"`
-	Addr       string `envconfig:"ADDR" default:":8888"`
-	TLSAddr    string `envconfig:"TLS_ADDR"`
-	Domains    string `envconfig:"DOMAINS" default:"www.glslsandbox.com,glslsandbox.com"`
-	Dev        bool   `envconfig:"DEV" default:"true"`
-	ReadOnly   bool   `envconfig:"READ_ONLY" default:"false"`
+	DataPath     string `envconfig:"DATA_PATH" default:"./data"`
+	Import       string `envconfig:"IMPORT"`
+	AuthSecret   string `envconfig:"AUTH_SECRET" default:"secret"`
+	Addr         string `envconfig:"ADDR" default:":8888"`
+	TLSAddr      string `envconfig:"TLS_ADDR"`
+	Domains      string `envconfig:"DOMAINS" default:"www.glslsandbox.com,glslsandbox.com"`
+	Dev          bool   `envconfig:"DEV" default:"false"`
+	ReadOnly     bool   `envconfig:"READ_ONLY" default:"false"`
+	CallbackHost string `envconfig:"CALLBACK_HOST"`
 }
 
 func main() {
@@ -75,6 +77,14 @@ func start() error {
 		}
 	}
 
+	callbackHost := cfg.CallbackHost
+	if callbackHost == "" && cfg.Dev {
+		callbackHost = "127.0.0.1:8888"
+	}
+	if callbackHost == "" {
+		return errors.New("CALLBACK_HOST must be set")
+	}
+
 	s, err := server.New(
 		cfg.Addr,
 		cfg.TLSAddr,
@@ -84,6 +94,7 @@ func start() error {
 		cfg.DataPath,
 		cfg.Dev,
 		cfg.ReadOnly,
+		callbackHost,
 	)
 	if err != nil {
 		return fmt.Errorf("could not create server: %w", err)

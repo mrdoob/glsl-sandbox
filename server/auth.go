@@ -7,7 +7,6 @@ import (
 
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
 	"github.com/mrdoob/glsl-sandbox/server/store"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -147,10 +146,11 @@ func (a *Auth) CheckPermissions(c echo.Context) error {
 func (a *Auth) Middleware(
 	f func(error, echo.Context) error,
 ) echo.MiddlewareFunc {
-	return middleware.JWTWithConfig(middleware.JWTConfig{
-		Claims:                  new(Claims),
-		SigningKey:              []byte(a.secret),
-		TokenLookup:             "cookie:" + accessTokenCookieName,
-		ErrorHandlerWithContext: f,
-	})
+	return nil
+	// return middleware.JWTWithConfig(middleware.JWTConfig{
+	// 	Claims:                  new(Claims),
+	// 	SigningKey:              []byte(a.secret),
+	// 	TokenLookup:             "cookie:" + accessTokenCookieName,
+	// 	ErrorHandlerWithContext: f,
+	// })
 }
