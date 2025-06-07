@@ -635,6 +635,11 @@ func (s *Server) authRoutes() {
 }
 
 func (s *Server) saveUser(c echo.Context, user goth.User) error {
+	err := s.auth.LoginGoth(c, user)
+	if err != nil {
+		return err
+	}
+
 	sess, err := s.sessionStore.New(c.Request(), sessionName)
 	if err != nil {
 		return err

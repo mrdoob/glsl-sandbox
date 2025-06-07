@@ -150,13 +150,18 @@ func (a *Auth) LoginPassword(c echo.Context, name, password string) error {
 func (a *Auth) LoginGoth(c echo.Context, gUser goth.User) error {
 	u, err := a.users.ProviderID(gUser.Provider, gUser.UserID)
 	if err != nil && errors.Is(err, store.ErrNotFound) {
-		_, err := a.Add(
+		id, err := a.Add(
 			gUser.NickName,
 			gUser.Email,
 			store.RoleUser,
 			gUser.Provider,
 			gUser.UserID,
 		)
+		if err != nil {
+			return err
+		}
+
+		u, err = a.users.User(id)
 		if err != nil {
 			return err
 		}
