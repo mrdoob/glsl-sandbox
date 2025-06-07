@@ -29,6 +29,22 @@ type User struct {
 	ProviderID string    `db:"provider_id"`
 }
 
+func (u User) Validate() error {
+	if u.Provider == "" {
+		return errors.New("provider is empty")
+	}
+
+	if u.Provider != "test" && u.ProviderID == "" {
+		return errors.New("provider_id is empty")
+	}
+
+	if u.Provider == "password" && len(u.Password) == 0 {
+		return errors.New("password is empty")
+	}
+
+	return nil
+}
+
 const (
 	sqlCreateUsers = `
 CREATE TABLE IF NOT EXISTS users (
@@ -190,6 +206,11 @@ func (s *Users) Add(user User) (int, error) {
 	if user.CreatedAt.IsZero() {
 		user.CreatedAt = time.Now()
 	}
+
+	if err := user.Validate(); err != nil {
+		return -1, err
+	}
+
 	res, err := s.db.NamedExec(sqlInsertUser, user)
 	if err != nil {
 		return -1, fmt.Errorf("could not add user: %w", err)
@@ -200,6 +221,10 @@ func (s *Users) Add(user User) (int, error) {
 }
 
 func (s *Users) Update(user User) error {
+	if err := user.Validate(); err != nil {
+		return err
+	}
+
 	r, err := s.db.NamedExec(sqlUpdateUser, user)
 	if err != nil {
 		return fmt.Errorf("could not update user: %w", err)
@@ -227,6 +252,9 @@ func (s *Users) UpdateFunc(id int, f func(User) User) error {
 		}
 
 		u = f(u)
+		if err := u.Validate(); err != nil {
+			return err
+		}
 
 		res, err := tx.NamedExec(sqlUpdateUser, u)
 		if err != nil {

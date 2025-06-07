@@ -130,10 +130,10 @@ func TestUserGetAll(t *testing.T) {
 	users, err := NewUsers(db)
 	require.NoError(t, err)
 
-	_, err = users.Add(User{Name: "one"})
+	_, err = users.Add(User{Name: "one", Provider: "test"})
 	require.NoError(t, err)
 
-	_, err = users.Add(User{Name: "two"})
+	_, err = users.Add(User{Name: "two", Provider: "test"})
 	require.NoError(t, err)
 
 	list, err := users.Users()
@@ -145,4 +145,8 @@ func TestUserGetAll(t *testing.T) {
 	}
 
 	require.ElementsMatch(t, []string{"one", "two"}, names)
+}
+
+func TestValidate(t *testing.T) {
+	t.Skip("create this test")
 }
