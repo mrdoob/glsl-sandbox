@@ -97,12 +97,14 @@ func list(users *store.Users) error {
 	}
 
 	for _, u := range list {
-		fmt.Printf("%s %s %s %v %v\n",
+		fmt.Printf("%s %s %s %v %v %s %s\n",
 			u.Name,
 			u.Email,
 			u.Role,
 			u.Active,
 			u.CreatedAt,
+			u.Provider,
+			u.ProviderID,
 		)
 	}
 
@@ -122,7 +124,7 @@ func createUser(users *store.Users) error {
 		return ErrNotEnoughParameters
 	}
 
-	_, err := users.User(user)
+	_, err := users.ProviderID("password", user)
 	if err == nil {
 		return fmt.Errorf("user already exist")
 	} else if !errors.Is(err, store.ErrNotFound) {
@@ -135,14 +137,16 @@ func createUser(users *store.Users) error {
 	}
 
 	u := store.User{
-		Name:      user,
-		Email:     email,
-		Password:  hashedPassword,
-		Role:      store.RoleModerator,
-		Active:    true,
-		CreatedAt: time.Now(),
+		Name:       user,
+		Email:      email,
+		Password:   hashedPassword,
+		Role:       store.RoleModerator,
+		Active:     true,
+		CreatedAt:  time.Now(),
+		Provider:   "password",
+		ProviderID: user,
 	}
-	err = users.Add(u)
+	_, err = users.Add(u)
 	if err != nil {
 		return fmt.Errorf("could not create user: %w", err)
 	}
@@ -162,7 +166,12 @@ func changePassword(users *store.Users) error {
 		return err
 	}
 
-	err = users.UpdateFunc(user, func(u store.User) store.User {
+	orig, err := users.ProviderID("password", user)
+	if err != nil {
+		return err
+	}
+
+	err = users.UpdateFunc(orig.ID, func(u store.User) store.User {
 		u.Password = hashedPassword
 		return u
 	})
