@@ -219,9 +219,10 @@ func (a *Auth) Middleware(
 	f func(echo.Context, error) error,
 ) echo.MiddlewareFunc {
 	return echojwt.WithConfig(echojwt.Config{
-		SigningKey:   []byte(a.secret),
-		TokenLookup:  "cookie:" + accessTokenCookieName,
-		ErrorHandler: f,
+		SigningKey:             []byte(a.secret),
+		TokenLookup:            "cookie:" + accessTokenCookieName,
+		ErrorHandler:           f,
+		ContinueOnIgnoredError: true,
 		NewClaimsFunc: func(c echo.Context) jwt.Claims {
 			return new(Claims)
 		},

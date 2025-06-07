@@ -14,6 +14,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/gorilla/sessions"
@@ -177,6 +178,10 @@ func (s *Server) setup() error {
 	s.echo.Renderer = s.template
 	s.echo.Logger.SetLevel(log.DEBUG)
 	s.echo.Use(middleware.Logger())
+	s.echo.Use(s.auth.Middleware(func(ctx echo.Context, err error) error {
+		ctx.Logger().Debugf("middleware error: %w", err)
+		return nil
+	}))
 	s.routes()
 
 	return nil
@@ -293,6 +298,8 @@ type galleryData struct {
 	Admin bool
 	// ReadOnly tells the server is in read only mode.
 	ReadOnly bool
+	// LoggedIn tells if the user is logged in.
+	LoggedIn bool
 }
 
 func (s *Server) indexRender(c echo.Context, admin bool) error {
@@ -346,6 +353,13 @@ func (s *Server) indexRender(c echo.Context, admin bool) error {
 		previousPage = fmt.Sprintf("%s&parent=%d", previousPage, parent)
 	}
 
+	loggedIn := true
+	err = s.auth.CheckPermissions(c, store.RoleUser)
+	if err != nil {
+		loggedIn = false
+		s.echo.Logger.Debugf("user is not logged in", err)
+	}
+
 	d := galleryData{
 		Effects:      effects,
 		URL:          url,
@@ -356,6 +370,7 @@ func (s *Server) indexRender(c echo.Context, admin bool) error {
 		PreviousPage: previousPage,
 		Admin:        admin,
 		ReadOnly:     s.readOnly,
+		LoggedIn:     loggedIn,
 	}
 
 	return c.Render(http.StatusOK, "gallery", d)
@@ -603,6 +618,17 @@ func (s *Server) authRoutes() {
 		)
 		if err != nil {
 			return err
+		}
+
+		// TODO: move cookie deletion to another place
+		cook, err := c.Cookie(accessTokenCookieName)
+		if err != nil {
+			c.Logger().Debugf("cannot find cookie")
+		} else {
+			c.Logger().Debugf("deleting cookie")
+			cook.Expires = time.Now().Add(-100 * time.Hour)
+			cook.MaxAge = -1
+			c.SetCookie(cook)
 		}
 
 		sess, err := s.sessionStore.Get(c.Request(), sessionName)
