@@ -15,6 +15,7 @@ type Effect struct {
 	Parent        int
 	ParentVersion int
 	User          string
+	UserID        int
 	Hidden        bool
 	Versions      []Version
 }
@@ -35,6 +36,7 @@ type sqliteEffect struct {
 	Parent        int       `db:"parent"`
 	ParentVersion int       `db:"parent_version"`
 	User          string    `db:"user"`
+	UserID        int       `db:"user_id"`
 	Hidden        bool      `db:"hidden"`
 }
 
@@ -54,6 +56,7 @@ CREATE TABLE IF NOT EXISTS effects (
 	parent INTEGER,
 	parent_version INTEGER,
 	user TEXT,
+	user_id INTEGER,
 	hidden INTEGER
 )
 `
@@ -133,6 +136,7 @@ INSERT INTO effects (
 	parent,
 	parent_version,
 	user,
+	user_id,
 	hidden
 ) VALUES(
 	:id,
@@ -141,6 +145,7 @@ INSERT INTO effects (
 	:parent,
 	:parent_version,
 	:user,
+	:user_id,
 	:hidden
 )
 `
@@ -152,6 +157,7 @@ INSERT INTO effects (
 	parent,
 	parent_version,
 	user,
+	user_id,
 	hidden
 ) VALUES(
 	:created_at,
@@ -159,6 +165,7 @@ INSERT INTO effects (
 	:parent,
 	:parent_version,
 	:user,
+	:user_id,
 	:hidden
 )
 `
@@ -257,7 +264,7 @@ func (s *Effects) AddEffect(e Effect) error {
 }
 
 func (s *Effects) Add(
-	parent int, parentVersion int, user string, version string,
+	parent int, parentVersion int, userID int, version string,
 ) (int, error) {
 	var lastID int
 	err := s.transaction(func(tx *sqlx.Tx) error {
@@ -267,7 +274,7 @@ func (s *Effects) Add(
 			ModifiedAt:    t,
 			Parent:        parent,
 			ParentVersion: parentVersion,
-			User:          user,
+			UserID:        userID,
 		}
 
 		r, err := tx.NamedExec(sqlInsertEffect, e)
@@ -502,6 +509,7 @@ func sqliteToEffect(e sqliteEffect) Effect {
 		Parent:        e.Parent,
 		ParentVersion: e.ParentVersion,
 		User:          e.User,
+		UserID:        e.UserID,
 		Hidden:        e.Hidden,
 	}
 	return n
@@ -523,6 +531,7 @@ func sqliteFromEffect(e Effect) sqliteEffect {
 		Parent:        e.Parent,
 		ParentVersion: e.ParentVersion,
 		User:          e.User,
+		UserID:        e.UserID,
 		Hidden:        e.Hidden,
 	}
 	return n

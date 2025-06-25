@@ -179,40 +179,52 @@ func (a *Auth) LoginGoth(c echo.Context, gUser goth.User) error {
 	return nil
 }
 
-func (a *Auth) CheckPermissions(c echo.Context, roles ...store.Role) error {
+func (a *Auth) GetUser(c echo.Context) (*store.User, error) {
 	user := c.Get("user")
 	if user == nil {
-		return fmt.Errorf("token not set")
+		return nil, fmt.Errorf("token not set")
 	}
 
 	u, ok := user.(*jwt.Token)
 	if !ok {
-		return fmt.Errorf("malformed token")
+		return nil, fmt.Errorf("malformed token")
 	}
 
 	if !u.Valid {
-		return fmt.Errorf("invalid claims")
+		return nil, fmt.Errorf("invalid claims")
 	}
 
 	claims, ok := u.Claims.(*Claims)
 	if !ok {
-		return fmt.Errorf("invalid claims")
+		return nil, fmt.Errorf("invalid claims")
 	}
 
 	dbUser, err := a.users.User(claims.ID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if !dbUser.Active {
-		return errors.New("user not active")
+		return nil, errors.New("user not active")
 	}
 
-	if slices.Contains(roles, dbUser.Role) {
-		return nil
+	return &dbUser, nil
+}
+
+func (a *Auth) CheckPermissions(
+	c echo.Context,
+	roles ...store.Role,
+) (*store.User, error) {
+	user, err := a.GetUser(c)
+	if err != nil {
+		return user, err
 	}
 
-	return fmt.Errorf("not enough permissions: %s", dbUser.Role)
+	if !slices.Contains(roles, user.Role) {
+		return nil, fmt.Errorf("not enough permissions: %s", user.Role)
+	}
+
+	return user, nil
 }
 
 func (a *Auth) Middleware(

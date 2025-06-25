@@ -354,7 +354,7 @@ func (s *Server) indexRender(c echo.Context, admin bool) error {
 	}
 
 	loggedIn := true
-	err = s.auth.CheckPermissions(c, store.RoleUser)
+	_, err = s.auth.GetUser(c)
 	if err != nil {
 		loggedIn = false
 		s.echo.Logger.Debugf("user is not logged in", err)
@@ -377,7 +377,7 @@ func (s *Server) indexRender(c echo.Context, admin bool) error {
 }
 
 func (s *Server) effectHandler(c echo.Context) error {
-	return c.File("./static/index.html")
+	return c.File("./server/assets/index.html")
 }
 
 func (s *Server) effectHandler_(c echo.Context) error {
@@ -434,6 +434,12 @@ type saveQuery struct {
 }
 
 func (s *Server) saveHandler(c echo.Context) error {
+	user, err := s.auth.CheckPermissions(c, store.RoleUser)
+	if err != nil {
+		c.Logger().Errorf("no permissions to save: %s", err.Error())
+		return c.String(http.StatusBadRequest, "")
+	}
+
 	if c.Request().Body == nil {
 		c.Logger().Errorf("empty body")
 		return c.String(http.StatusBadRequest, "")
@@ -466,19 +472,12 @@ func (s *Server) saveHandler(c echo.Context) error {
 	}
 
 	var id, version int
-	if save.CodeID == "" {
-		parent, parentVersion, err := idVersion(save.Parent)
-		if err != nil {
-			parent, parentVersion = -1, -1
-		}
+	var effect store.Effect
 
-		id, err = s.effects.Add(parent, parentVersion, save.User, save.Code)
-		if err != nil {
-			c.Logger().Errorf("could not save new effect: %s", err.Error())
-			return c.String(http.StatusInternalServerError, "")
-		}
-	} else {
-		parts := strings.Split(save.CodeID, ".")
+	// get current effect
+
+	if save.CodeID != "" {
+		parts = strings.Split(save.CodeID, ".")
 		if len(parts) < 1 {
 			c.Logger().Errorf("malformed code id: %s", save.CodeID)
 			return c.String(http.StatusBadRequest, "")
@@ -490,6 +489,27 @@ func (s *Server) saveHandler(c echo.Context) error {
 			return c.String(http.StatusBadRequest, "")
 		}
 
+		if id > 0 {
+			effect, err = s.effects.Effect(id)
+			if err != nil {
+				c.Logger().Errorf("could not get effect: %s", err.Error())
+				return c.String(http.StatusBadRequest, "")
+			}
+		}
+	}
+
+	if save.CodeID == "" || user.ID != effect.ID {
+		parent, parentVersion, err := idVersion(save.Parent)
+		if err != nil {
+			parent, parentVersion = -1, -1
+		}
+
+		id, err = s.effects.Add(parent, parentVersion, user.ID, save.Code)
+		if err != nil {
+			c.Logger().Errorf("could not save new effect: %s", err.Error())
+			return c.String(http.StatusInternalServerError, "")
+		}
+	} else {
 		version, err = s.effects.AddVersion(id, save.Code)
 		if err != nil {
 			c.Logger().Errorf("could not save new version: %s", err.Error())

@@ -86,7 +86,7 @@ func testHidden(t *testing.T, s *Effects) {
 }
 
 func testAddVersion(t *testing.T, s *Effects) {
-	id, err := s.Add(10, 5, "user", "first")
+	id, err := s.Add(10, 5, 42, "first")
 	require.NoError(t, err)
 	require.Equal(t, 1, id)
 
@@ -101,7 +101,7 @@ func testAddVersion(t *testing.T, s *Effects) {
 	require.Equal(t, "1.png", e.ImageName())
 	require.Equal(t, 10, e.Parent)
 	require.Equal(t, 5, e.ParentVersion)
-	require.Equal(t, "user", e.User)
+	require.Equal(t, 42, e.UserID)
 	require.Len(t, e.Versions, 1)
 
 	v := e.Versions[0]
@@ -126,7 +126,7 @@ func testAddVersion(t *testing.T, s *Effects) {
 }
 
 func testHide(t *testing.T, s *Effects) {
-	id, err := s.Add(10, 5, "user", "first")
+	id, err := s.Add(10, 5, 0, "first")
 	require.NoError(t, err)
 	require.Equal(t, 1, id)
 
@@ -152,18 +152,18 @@ func testHide(t *testing.T, s *Effects) {
 }
 
 func testSiblings(t *testing.T, s *Effects) {
-	pid, err := s.Add(-1, -1, "user", "parent")
+	pid, err := s.Add(-1, -1, 0, "parent")
 	require.NoError(t, err)
 
 	expected := []int{pid}
 	for i := 0; i < 10; i++ {
-		id, err := s.Add(pid, 0, "user", "child")
+		id, err := s.Add(pid, 0, 0, "child")
 		require.NoError(t, err)
 		expected = append(expected, id)
 	}
 
 	for i := 0; i < 10; i++ {
-		_, err = s.Add(-1, -1, "user", "no")
+		_, err = s.Add(-1, -1, 0, "no")
 		require.NoError(t, err)
 	}
 
